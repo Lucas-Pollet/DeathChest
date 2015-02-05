@@ -1,6 +1,6 @@
 # DeathChest
 
-DeathChest is an plugin for Bukkit that will create a chest with all drops when you die.
+DeathChest is a plugin for Bukkit that will create a chest with all drops when you die.
 It's fully customizable:
 
 - Change maximum amounts of death chests
@@ -14,7 +14,7 @@ It's fully customizable:
 
  - Add permission node to bypass protection
  - Make it compatible with Java 7
- - Have any ideas? [Go here](http://spigotmc.org "SpigotMC - DeathChest") and post it in the disussion section :)
+ - Have any ideas? [Go here](https://github.com/KaskadekingDE/DeathChest/issues/new "New Issue - DeathChest") to create a new issue :)
 
 License
 ----
