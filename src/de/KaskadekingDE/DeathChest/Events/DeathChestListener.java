@@ -226,7 +226,7 @@ public class DeathChestListener implements Listener {
 
     private Player getKey(Location loc) {
         for(Player p: deathChests.keySet()) {
-            if(deathChests.get(p).equals(loc)) {
+            if(deathChests.get(p).contains(loc)) {
                 return p;
             }
         }
