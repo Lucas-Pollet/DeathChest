@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -20,11 +21,12 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class DeathChestListener implements Listener {
 
-    public static HashMap<Player, Location> deathChests = new HashMap<Player, Location>();
+    public static HashMap<Player, List<Location>> deathChests = new HashMap<Player, List<Location>>();
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerDeath(PlayerDeathEvent e) {
@@ -36,9 +38,20 @@ public class DeathChestListener implements Listener {
             return;
         }
         Location deathLoc = e.getEntity().getLocation();
-        if(deathLoc.getWorld().getBlockAt(deathLoc).getType() != Material.AIR && Main.OnlyReplaceAir) {
-            e.getEntity().sendMessage(Main.Prefix + " " + LangStrings.FailedPlacing);
-            return;
+        boolean placeingSuccessful = false;
+        if(Main.OnlyReplaceWhitelistedBlocks) {
+            for(Object b: Main.whitelistedBlocks) {
+                String block = b.toString();
+                Material material = Material.getMaterial(block);
+                if(deathLoc.getBlock().getType() == material) {
+                    placeingSuccessful = true;
+                }
+            }
+            if(!placeingSuccessful) {
+                e.getEntity().sendMessage(Main.Prefix + " " + LangStrings.FailedPlacing);
+                return;
+            }
+
         }
         deathLoc.getWorld().getBlockAt(deathLoc).setType(Material.CHEST);
         Location blockLoc = deathLoc.getWorld().getBlockAt(deathLoc).getLocation();
@@ -67,7 +80,12 @@ public class DeathChestListener implements Listener {
         } catch(ArrayIndexOutOfBoundsException aioobe) {
             count = 0;
         }
-        deathChests.put(p, blockLoc);
+        List<Location> locations;
+        locations = deathChests.get(p);
+        if(locations == null)
+            locations = new ArrayList<Location>();
+        locations.add(blockLoc);
+        deathChests.put(p, locations);
         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".x", x);
         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".y", y);
         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".z", z);
@@ -87,7 +105,7 @@ public class DeathChestListener implements Listener {
             Location loc = ((Chest) e.getInventory().getHolder()).getLocation();
             Player owner = getKey(loc);
             if(owner != null) {
-                if(!p.equals(owner)) {
+                if(!p.equals(owner) && !p.hasPermission("deathchest.protection.bypass")) {
                     p.sendMessage(Main.Prefix + " " + LangStrings.NotOwner);
                     e.setCancelled(true);
                     return;
@@ -118,7 +136,7 @@ public class DeathChestListener implements Listener {
                         Chest c = (Chest) e.getInventory().getHolder();
                         c.getBlock().setType(Material.AIR);
                         int dcc = DeathChestCount(loc, p.getUniqueId());
-                        deathChests.remove(p, loc);
+                        deathChests.get(p).remove(loc);
                         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + dcc, null);
                         Main.plugin.saveConfig();
                         p.sendMessage(Main.Prefix + " " + LangStrings.ChestRemoved);

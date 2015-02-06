@@ -6,11 +6,15 @@ import de.KaskadekingDE.DeathChest.Config.LanguageConfig;
 import de.KaskadekingDE.DeathChest.Events.DeathChestListener;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -22,11 +26,13 @@ public class Main extends JavaPlugin {
 
     public static String Prefix;
     public static boolean UsePermission;
-    public static boolean OnlyReplaceAir;
+    public static boolean OnlyReplaceWhitelistedBlocks;
     public static boolean ShowCoords;
     public static boolean RemoveEmptyDeathChest;
     public static boolean ProtectedChest;
     public static int MaxChests;
+    public static List<?> whitelistedBlocks;
+    private static String[] defaultList = {"AIR", "STONE", "DEAD_BUSH", "LEAVES", "RED_ROSE", "YELLOW_FLOWER", "VINE", "GRASS"};
 
     public void onEnable() {
         this.plugin = this;
@@ -47,11 +53,12 @@ public class Main extends JavaPlugin {
     public void loadConfig() {
         getConfig().addDefault("prefix", "&6[&cDeathChest&6] ");
         getConfig().addDefault("need-permission", true);
-        getConfig().addDefault("only-replace-air", true);
+        getConfig().addDefault("only-replace-whitelisted-blocks", true);
         getConfig().addDefault("show-coords", false);
         getConfig().addDefault("max-death-chests", 5);
         getConfig().addDefault("remove-empty-death-chest", true);
         getConfig().addDefault("protected-death-chest", false);
+        getConfig().addDefault("whitelisted-blocks", Arrays.asList(defaultList));
         langConfig.saveDefaultLangConfig();
         langConfig.reloadLangConfig();
         getConfig().options().copyDefaults(true);
@@ -59,12 +66,12 @@ public class Main extends JavaPlugin {
         loadDeathChests();
         Prefix = getConfig().getString("prefix").replace('&', '§').trim();
         UsePermission = getConfig().getBoolean("need-permission");
-        OnlyReplaceAir = getConfig().getBoolean("only-replace-air");
+        OnlyReplaceWhitelistedBlocks = getConfig().getBoolean("only-replace-whitelisted-blocks");
         ShowCoords = getConfig().getBoolean("show-coords");
         RemoveEmptyDeathChest = getConfig().getBoolean("remove-empty-death-chest");
         ProtectedChest = getConfig().getBoolean("protected-death-chest");
         MaxChests = getConfig().getInt("max-death-chests");
-
+        whitelistedBlocks = getConfig().getList("whitelisted-blocks");
         LangStrings.ChestRemoved = langConfig.getLangConfig().getString("death-chest-removed").replace('&', '§');
         LangStrings.ChestSpawned = langConfig.getLangConfig().getString("death-chest-spawned").replace('&', '§');
         LangStrings.ConfigReloaded = langConfig.getLangConfig().getString("config-reloaded").replace('&', '§');
@@ -81,10 +88,14 @@ public class Main extends JavaPlugin {
 
     private void loadDeathChests() {
         try {
+
             for(String key: getConfig().getConfigurationSection("death-chests").getKeys(false)) {
+                List<Location> locations = new ArrayList<Location>();
+                Player player;
                 try {
                     UUID uuid = UUID.fromString(key);
                     Player p = (Player)Bukkit.getOfflinePlayer(uuid);
+                    player = p;
                     for (String dc : getConfig().getConfigurationSection("death-chests." + key).getKeys(false)) {
                         int x = getConfig().getInt("death-chests." + key + "." + dc + ".x");
                         int y = getConfig().getInt("death-chests." + key + "." + dc + ".y");
@@ -97,13 +108,15 @@ public class Main extends JavaPlugin {
                             continue;
                         }
                         Location loc = new Location(world, x, y, z, 0.0F, 0.0F);
-                        DeathChestListener.deathChests.put(p, loc);
+                        locations.add(loc);
+
                     }
                 } catch(NullPointerException ex) {
                     continue;
                 }
-
+                DeathChestListener.deathChests.put(player, locations);
             }
+
         } catch(NullPointerException ex) {
             return;
         }
