@@ -1,6 +1,7 @@
 package de.KaskadekingDE.DeathChest;
 
 import de.KaskadekingDE.DeathChest.Commands.DeathChestCommand;
+import de.KaskadekingDE.DeathChest.Config.KillerChestsConfig;
 import de.KaskadekingDE.DeathChest.Config.LangStrings;
 import de.KaskadekingDE.DeathChest.Config.LanguageConfig;
 import de.KaskadekingDE.DeathChest.Events.DeathChestListener;
@@ -22,6 +23,7 @@ public class Main extends JavaPlugin {
 
     public static Main plugin;
     public static LanguageConfig langConfig;
+    public static KillerChestsConfig killerConfig;
     Logger log = Logger.getLogger("Minecraft");
 
     public static String Prefix;
@@ -37,6 +39,7 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         this.plugin = this;
         langConfig = new LanguageConfig(this);
+        killerConfig = new KillerChestsConfig(this);
         loadConfig();
         getCommand("deathchest").setExecutor(new DeathChestCommand());
         Bukkit.getPluginManager().registerEvents(new DeathChestListener(), this);
@@ -61,9 +64,12 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("whitelisted-blocks", Arrays.asList(defaultList));
         langConfig.saveDefaultLangConfig();
         langConfig.reloadLangConfig();
+        killerConfig.saveDefaultKillerConfig();
+        killerConfig.reloadKillerConfig();
         getConfig().options().copyDefaults(true);
         saveConfig();
         loadDeathChests();
+        loadKillerChests();
         Prefix = getConfig().getString("prefix").replace('&', '§').trim();
         UsePermission = getConfig().getBoolean("need-permission");
         OnlyReplaceWhitelistedBlocks = getConfig().getBoolean("only-replace-whitelisted-blocks");
@@ -84,6 +90,7 @@ public class Main extends JavaPlugin {
         LangStrings.NotOwner = langConfig.getLangConfig().getString("your-not-owner").replace('&', '§');
         LangStrings.DontBreak = langConfig.getLangConfig().getString("dont-break").replace('&', '§');
         LangStrings.MaxExceeded = langConfig.getLangConfig().getString("max-death-chests-exceeded").replace('&', '§').replace("%n", Integer.toString(MaxChests));
+        LangStrings.VictimsLootStored = langConfig.getLangConfig().getString("victims-loot-stored").replace('&', '§');
     }
 
     private void loadDeathChests() {
@@ -94,7 +101,7 @@ public class Main extends JavaPlugin {
                 Player player;
                 try {
                     UUID uuid = UUID.fromString(key);
-                    Player p = (Player)Bukkit.getOfflinePlayer(uuid);
+                    Player p = Bukkit.getOfflinePlayer(uuid).getPlayer();
                     player = p;
                     for (String dc : getConfig().getConfigurationSection("death-chests." + key).getKeys(false)) {
                         int x = getConfig().getInt("death-chests." + key + "." + dc + ".x");
@@ -117,6 +124,40 @@ public class Main extends JavaPlugin {
                 DeathChestListener.deathChests.put(player, locations);
             }
 
+        } catch(NullPointerException ex) {
+            return;
+        }
+    }
+
+    private void loadKillerChests() {
+        try {
+            for(String key: killerConfig.getKillerConfig().getConfigurationSection("death-chests").getKeys(false)) {
+                List<Location> locations = new ArrayList<Location>();
+                Player player;
+                try {
+                    UUID uuid = UUID.fromString(key);
+                    Player p = Bukkit.getOfflinePlayer(uuid).getPlayer();
+                    player = p;
+                    for (String dc : getConfig().getConfigurationSection("death-chests." + key).getKeys(false)) {
+                        int x = getConfig().getInt("death-chests." + key + "." + dc + ".x");
+                        int y = getConfig().getInt("death-chests." + key + "." + dc + ".y");
+                        int z = getConfig().getInt("death-chests." + key + "." + dc + ".z");
+                        String w = getConfig().getString("death-chests." + key + "." + dc + ".world");
+                        World world;
+                        try {
+                            world = Bukkit.getWorld(w);
+                        } catch(IllegalArgumentException ex) {
+                            continue;
+                        }
+                        Location loc = new Location(world, x, y, z, 0.0F, 0.0F);
+                        locations.add(loc);
+
+                    }
+                } catch(NullPointerException ex) {
+                    continue;
+                }
+                DeathChestListener.killerChests.put(player, locations);
+            }
         } catch(NullPointerException ex) {
             return;
         }

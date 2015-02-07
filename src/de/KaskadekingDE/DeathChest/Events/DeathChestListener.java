@@ -12,11 +12,12 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.block.Chest;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -27,17 +28,39 @@ import java.util.UUID;
 public class DeathChestListener implements Listener {
 
     public static HashMap<Player, List<Location>> deathChests = new HashMap<Player, List<Location>>();
+    public static HashMap<Player, List<Location>> killerChests = new HashMap<Player, List<Location>>();
 
     @EventHandler(priority = EventPriority.HIGH)
-    public void onPlayerDeath(PlayerDeathEvent e) {
-        if(Main.UsePermission && !e.getEntity().hasPermission("deathchest.place")) {
+    public void onEntityDeath(EntityDeathEvent e) {
+        if(!(e.getEntity() instanceof Player)) return;
+        for(ItemStack item: e.getDrops()) {
+            if(item == null) {
+                return;
+            } else {
+                break;
+            }
+        }
+        if(e.getEntity().getKiller() == null) {
+            placeDeathChest((Player)e.getEntity(), e.getEntity().getLocation(), e.getDrops());
+            if(e.getEntity().hasPermission("deathchest.place"))
+                 e.getDrops().clear();
+        } else {
+            placeKillerChest((Player)e.getEntity(), e.getEntity().getKiller(), e.getEntity().getLocation(), e.getDrops());
+            if(e.getEntity().hasPermission("deathchest.kill.place"))
+                e.getDrops().clear();
+        }
+    }
+
+    private void placeDeathChest(Player p, Location loc, List<ItemStack> drops) {
+        if(Main.UsePermission && !p.hasPermission("deathchest.place")) {
             return;
         }
-        if(playersDeathChests(e.getEntity().getUniqueId().toString()) != null && Main.MaxChests != -1 && playersDeathChests(e.getEntity().getUniqueId().toString()).size() >= Main.MaxChests) {
-            e.getEntity().sendMessage(Main.Prefix + " " + LangStrings.MaxExceeded);
+        if(playersDeathChests(p.getUniqueId().toString()) != null && Main.MaxChests != -1 && playersDeathChests(p.getUniqueId().toString()).size() >= Main.MaxChests) {
+            p.sendMessage(Main.Prefix + " " + LangStrings.MaxExceeded);
             return;
         }
-        Location deathLoc = e.getEntity().getLocation();
+
+        Location deathLoc = loc;
         boolean placeingSuccessful = false;
         if(Main.OnlyReplaceWhitelistedBlocks) {
             for(Object b: Main.whitelistedBlocks) {
@@ -48,7 +71,7 @@ public class DeathChestListener implements Listener {
                 }
             }
             if(!placeingSuccessful) {
-                e.getEntity().sendMessage(Main.Prefix + " " + LangStrings.FailedPlacing);
+                p.sendMessage(Main.Prefix + " " + LangStrings.FailedPlacing);
                 return;
             }
 
@@ -57,18 +80,17 @@ public class DeathChestListener implements Listener {
         Location blockLoc = deathLoc.getWorld().getBlockAt(deathLoc).getLocation();
         Chest deathChest = (Chest) deathLoc.getWorld().getBlockAt(deathLoc).getState();
         Inventory chestInv = deathChest.getInventory();
-        for(ItemStack drop: e.getDrops()) {
+        for(ItemStack drop: drops) {
             chestInv.addItem(drop);
         }
-        e.getDrops().clear();
+        drops.clear();
         if(Main.ShowCoords) {
             String message = LangStrings.ChestSpawned.replace("%x", Integer.toString(blockLoc.getBlockX())).replace("%y", Integer.toString(blockLoc.getBlockY())).replace("%z", Integer.toString(blockLoc.getBlockZ()));
-            e.getEntity().sendMessage(Main.Prefix + " " + message);
+            p.sendMessage(Main.Prefix + " " + message);
         }
         int x = blockLoc.getBlockX();
         int y = blockLoc.getBlockY();
         int z = blockLoc.getBlockZ();
-        Player p = e.getEntity();
         int count;
         try {
             Object[] countArray = Main.plugin.getConfig().getConfigurationSection("death-chests." + p.getUniqueId()).getKeys(false).toArray();
@@ -89,29 +111,97 @@ public class DeathChestListener implements Listener {
         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".x", x);
         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".y", y);
         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".z", z);
-        Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".world", e.getEntity().getWorld().getName());
+        Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".world", p.getWorld().getName());
         Main.plugin.saveConfig();
+    }
+
+    private void placeKillerChest(Player p, Player killer, Location loc, List<ItemStack> drops) {
+        if (!killer.hasPermission("deathchest.kill.place")) {
+            return;
+        }
+        Location deathLoc = loc;
+        boolean placeingSuccessful = false;
+        if(Main.OnlyReplaceWhitelistedBlocks) {
+            for(Object b: Main.whitelistedBlocks) {
+                String block = b.toString();
+                Material material = Material.getMaterial(block);
+                if(deathLoc.getBlock().getType() == material) {
+                    placeingSuccessful = true;
+                }
+            }
+            if(!placeingSuccessful) {
+                killer.sendMessage(Main.Prefix + " " + LangStrings.FailedPlacing);
+                return;
+            }
+        }
+
+        deathLoc.getWorld().getBlockAt(deathLoc).setType(Material.CHEST);
+        Location blockLoc = deathLoc.getWorld().getBlockAt(deathLoc).getLocation();
+        Chest deathChest = (Chest) deathLoc.getWorld().getBlockAt(deathLoc).getState();
+        Inventory chestInv = deathChest.getInventory();
+        for(ItemStack drop: drops) {
+            chestInv.addItem(drop);
+        }
+
+        int x = blockLoc.getBlockX();
+        int y = blockLoc.getBlockY();
+        int z = blockLoc.getBlockZ();
+        int count;
+        try {
+            Object[] countArray = Main.killerConfig.getKillerConfig().getConfigurationSection("death-chests." + killer.getUniqueId()).getKeys(false).toArray();
+            Object countObj = countArray[countArray.length-1];
+            count = Integer.parseInt(countObj.toString());
+            count++;
+        } catch(NullPointerException npe) {
+            count = 0;
+        } catch(ArrayIndexOutOfBoundsException aioobe) {
+            count = 0;
+        }
+        List<Location> tmp;
+        if(killerChests == null)
+            killerChests = new HashMap<Player, List<Location>>();
+        if(!killerChests.containsKey(killer)) {
+            tmp = new ArrayList<Location>();
+        } else {
+            tmp = killerChests.get(killer);
+        }
+        tmp.add(blockLoc);
+        killerChests.put(killer, tmp);
+        Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".x", x);
+        Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".y", y);
+        Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".z", z);
+        Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".world", killer.getWorld().getName());
+        Main.killerConfig.saveKillerConfig();
+        killer.sendMessage(Main.Prefix + " " + LangStrings.VictimsLootStored);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onInventoryOpen(InventoryOpenEvent e) {
         if(e.getInventory().getHolder() instanceof Chest) {
-            Player p = (Player) e.getPlayer();
-            if(Main.UsePermission && !p.hasPermission("deathchest.place")) {
-                return;
-            }
-            if(!Main.ProtectedChest)
-                return;
             Location loc = ((Chest) e.getInventory().getHolder()).getLocation();
-            Player owner = getKey(loc);
-            if(owner != null) {
-                if(!p.equals(owner) && !p.hasPermission("deathchest.protection.bypass")) {
-                    p.sendMessage(Main.Prefix + " " + LangStrings.NotOwner);
-                    e.setCancelled(true);
-                    return;
-                }
-
+            Player p = (Player) e.getPlayer();
+            if(!checkForDeathChest(p, loc) && !checkForKillerChest(loc, p))
+                return;
+            if(checkForDeathChest(p, loc)) {
+                openDeathChest(p,  loc, e);
             }
+        }
+    }
+
+    private void openDeathChest(Player p, Location loc, InventoryOpenEvent e) {
+        if(Main.UsePermission && !p.hasPermission("deathchest.place")) {
+            return;
+        }
+        if(!Main.ProtectedChest)
+            return;
+        Player owner = getKey(loc);
+        if(owner != null) {
+            if(!p.equals(owner) && !p.hasPermission("deathchest.protection.bypass")) {
+                p.sendMessage(Main.Prefix + " " + LangStrings.NotOwner);
+                e.setCancelled(true);
+                return;
+            }
+
         }
     }
 
@@ -119,41 +209,76 @@ public class DeathChestListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent e) {
         if(e.getInventory().getHolder() instanceof Chest){
             Player p = (Player) e.getPlayer();
-            if(Main.UsePermission && !p.hasPermission("deathchest.place")) {
-                return;
-            }
-            if(playersDeathChests(p.getUniqueId().toString()) == null)
-                return;
-            for(Location loc: playersDeathChests(p.getUniqueId().toString())) {
-                if(loc != null) {
-                    Location curChest = ((Chest) e.getInventory().getHolder()).getLocation();
-                    if(curChest.equals(loc)) {
-                        ItemStack[] items = e.getInventory().getContents();
-                        for(ItemStack item: items) {
-                            if(item != null)
-                                return;
-                        }
-                        Chest c = (Chest) e.getInventory().getHolder();
-                        c.getBlock().setType(Material.AIR);
-                        int dcc = DeathChestCount(loc, p.getUniqueId());
-                        deathChests.get(p).remove(loc);
-                        Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + dcc, null);
-                        Main.plugin.saveConfig();
-                        p.sendMessage(Main.Prefix + " " + LangStrings.ChestRemoved);
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
+            if(checkForDeathChest(p, ((Chest) e.getInventory().getHolder()).getLocation())) {
+                closeDeathChest(p, ((Chest) e.getInventory().getHolder()).getLocation(), e.getInventory().getHolder(), e.getInventory().getContents());
+            } else if(checkForKillerChest(((Chest) e.getInventory().getHolder()).getLocation(), p)) {
+                closeKillerChest(p,((Chest) e.getInventory().getHolder()).getLocation(), e.getInventory().getHolder(), e.getInventory().getContents());
             }
 
+        }
+    }
+
+    public void closeDeathChest(Player p, Location loc, InventoryHolder ih,ItemStack[] items) {
+        if(Main.UsePermission && !p.hasPermission("deathchest.place")) {
+            return;
+        }
+        if(playersDeathChests(p.getUniqueId().toString()) == null)
+            return;
+        for(Location loc2: playersDeathChests(p.getUniqueId().toString())) {
+            if(loc != null) {
+                Location curChest = loc;
+                if(curChest.equals(loc)) {
+                    for(ItemStack item: items) {
+                        if(item != null)
+                            return;
+                    }
+                    Chest c = (Chest) ih;
+                    c.getBlock().setType(Material.AIR);
+                    int dcc = DeathChestCount(loc, p.getUniqueId());
+                    deathChests.get(p).remove(loc);
+                    Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + dcc, null);
+                    Main.plugin.saveConfig();
+                    p.sendMessage(Main.Prefix + " " + LangStrings.ChestRemoved);
+                    break;
+                } else {
+                    continue;
+                }
+            }
+        }
+    }
+
+    public void closeKillerChest(Player killer, Location loc, InventoryHolder ih, ItemStack[] items) {
+        if(!killer.hasPermission("deathchest.place")) {
+            return;
+        }
+        if(killerChests.get(killer).contains(loc)) {
+            for(ItemStack item: items) {
+                if(item != null)
+                    return;
+            }
+            Chest c = (Chest) ih;
+            c.getBlock().setType(Material.AIR);
+            killerChests.remove(loc);
+            int count;
+            try {
+                Object[] countArray = Main.killerConfig.getKillerConfig().getConfigurationSection("death-chests." + killer.getUniqueId()).getKeys(false).toArray();
+                Object countObj = countArray[countArray.length-1];
+                count = Integer.parseInt(countObj.toString());
+                count++;
+            } catch(NullPointerException npe) {
+                count = 0;
+            } catch(ArrayIndexOutOfBoundsException aioobe) {
+                count = 0;
+            }
+            Main.plugin.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count, null);
+            Main.plugin.killerConfig.saveKillerConfig();
         }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockBreak(BlockBreakEvent e) {
         if(e.getBlock().getType() == Material.CHEST) {
-            if(deathChests.containsValue(e.getBlock().getLocation())) {
+            if(deathChests.containsValue(e.getBlock().getLocation()) || killerChests.get(e.getPlayer()).contains(e.getBlock().getLocation())) {
                 e.getPlayer().sendMessage(Main.Prefix + " " + LangStrings.DontBreak);
                 e.setCancelled(true);
             }
@@ -231,5 +356,21 @@ public class DeathChestListener implements Listener {
             }
         }
         return null;
+    }
+
+    private boolean checkForDeathChest(Player p, Location loc) {
+        if(deathChests.containsKey(p)) {
+            if(deathChests.get(p).contains(loc)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkForKillerChest(Location loc, Player p) {
+        if(killerChests.get(p).contains(loc)) {
+            return true;
+        }
+        return false;
     }
 }

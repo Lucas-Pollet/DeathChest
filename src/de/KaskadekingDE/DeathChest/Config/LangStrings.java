@@ -13,4 +13,5 @@ public class LangStrings {
     public static String ChestRemoved;
     public static String NotOwner;
     public static String DontBreak;
+    public static String VictimsLootStored;
 }
