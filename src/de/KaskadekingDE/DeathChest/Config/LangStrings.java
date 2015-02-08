@@ -14,4 +14,8 @@ public class LangStrings {
     public static String NotOwner;
     public static String DontBreak;
     public static String VictimsLootStored;
+    public static String TimeStarted;
+    public static String TimeOver;
+    public static String TimeStartedKiller;
+    public static String TimeOverKiller;
 }
