@@ -24,7 +24,7 @@ public class DeathChestCommand implements CommandExecutor {
             cs.sendMessage("§9/dc help   §7- " + LangStrings.HelpHelp);
             return true;
         } else if(args[0].equalsIgnoreCase("reload")) {
-            if(!cs.hasPermission("deathchest.help")) {
+            if(!cs.hasPermission("deathchest.reload")) {
                 cs.sendMessage(Main.Prefix + LangStrings.NoPermissions);
                 return true;
             }

@@ -1,5 +1,12 @@
 package de.KaskadekingDE.DeathChest;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.reflect.StructureModifier;
+import com.comphenix.protocol.wrappers.BlockPosition;
 import de.KaskadekingDE.DeathChest.Commands.DeathChestCommand;
 import de.KaskadekingDE.DeathChest.Config.KillerChestsConfig;
 import de.KaskadekingDE.DeathChest.Config.LangStrings;
@@ -12,9 +19,11 @@ import org.bukkit.World;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -24,6 +33,7 @@ public class Main extends JavaPlugin {
     public static LanguageConfig langConfig;
     public static KillerChestsConfig killerConfig;
     Logger log = Logger.getLogger("Minecraft");
+    public static ProtocolManager protocol;
 
     public static String Prefix;
     public static boolean UsePermission;
@@ -35,7 +45,7 @@ public class Main extends JavaPlugin {
     public static int Seconds;
     public static boolean RemoveChestAfterXSeconds;
     public static List<?> whitelistedBlocks;
-    private static String[] defaultList = {"AIR", "STONE", "DEAD_BUSH", "LEAVES", "RED_ROSE", "YELLOW_FLOWER", "VINE", "GRASS"};
+    private static String[] defaultList = {"AIR", "STONE", "DEAD_BUSH", "LEAVES", "RED_ROSE", "YELLOW_FLOWER", "VINE", "LONG_GRASS", "TALL_GRASS"};
 
     public enum ChestStates {
         DeathChest,
@@ -48,11 +58,71 @@ public class Main extends JavaPlugin {
         langConfig = new LanguageConfig(this);
         killerConfig = new KillerChestsConfig(this);
         loadConfig();
+        checkForProtocolLib();
         getCommand("deathchest").setExecutor(new DeathChestCommand());
         Bukkit.getPluginManager().registerEvents(new DeathChestListener(), this);
         PluginDescriptionFile pdf = getDescription();
         log.info("[DeathChest] DeathChest v" + pdf.getVersion() + " has been enabled! :)");
     }
+
+    private void checkForProtocolLib() {
+        Plugin proLib = Bukkit.getServer().getPluginManager().getPlugin("ProtocolLib");
+        if (proLib == null) {
+            log.severe("Couldn't hook into ProtocolLib!");
+        } else {
+            protocol = ProtocolLibrary.getProtocolManager();
+            protocol.addPacketListener(new PacketAdapter(this,
+                    PacketType.Play.Server.BLOCK_ACTION, PacketType.Play.Server.NAMED_SOUND_EFFECT) {
+                @Override
+                public void onPacketSending(PacketEvent event) {
+                    PacketType type = event.getPacketType();
+
+                    if (type == PacketType.Play.Server.BLOCK_ACTION) {
+                        World world = event.getPlayer().getWorld();
+                        BlockPosition bpos;
+                        try {
+                            bpos =  event.getPacket().getBlockPositionModifier().read(0);
+                        } catch(Exception ex) {
+                            return;
+                        }
+                        int blockX = bpos.getX();
+                        int blockY = bpos.getY();
+                        int blockZ = bpos.getZ();
+                        Location loc = new Location(world, blockX, blockY, blockZ);
+                        if (world.getBlockAt(loc).getType() == Material.CHEST) {
+
+                            Player p = DeathChestListener.getKeyForDeathChest(loc);
+                            if(p == null) return;
+                            if(!p.equals(event.getPlayer()) && !event.getPlayer().hasPermission("deathchest.protection.bypass")) {
+                                event.setCancelled(true);
+                            }
+                        }
+                    } else if (type == PacketType.Play.Server.NAMED_SOUND_EFFECT) {
+                        String soundEffectName = event.getPacket().getSpecificModifier(String.class).read(0);
+                        World world = event.getPlayer().getWorld();
+                        BlockPosition bpos;
+                        try {
+                            bpos =  event.getPacket().getBlockPositionModifier().read(0);
+                        } catch(Exception ex) {
+                            return;
+                        }
+                        int blockX = bpos.getX();
+                        int blockY = bpos.getY();
+                        int blockZ = bpos.getZ();
+                        Location loc = new Location(world, blockX, blockY, blockZ);
+                        if (soundEffectName.contains("chest")) {
+                            Player p = DeathChestListener.getKeyForDeathChest(loc);
+                            if(p == null) return;
+                            if(!p.equals(event.getPlayer()) && !event.getPlayer().hasPermission("deathchest.protection.bypass")) {
+                                event.setCancelled(true);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
 
     @Override
     public void onDisable() {
@@ -195,6 +265,7 @@ public class Main extends JavaPlugin {
 
 
     private void saveDeathChestInventory() {
+        if(DeathChestListener.deathChests.keySet() == null) return;
         Set<Player> players = DeathChestListener.deathChests.keySet();
         for(Player p: players) {
             List<Location> locs = DeathChestListener.deathChests.get(p);
@@ -202,7 +273,14 @@ public class Main extends JavaPlugin {
                 if(chestState(p, loc) != ChestStates.DeathChest) {
                     continue;
                 } else {
-                    int dcc = DeathChestListener.DeathChestCount(loc, p.getUniqueId());
+                    int dcc;
+                    try {
+                        dcc = DeathChestListener.DeathChestCount(loc, p.getUniqueId());
+                    } catch(NullPointerException npe) {
+                        continue;
+                    }
+
+                    if(dcc == -1) continue;
                     Chest chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
                     Inventory inv = DeathChestListener.chestInventory.get(chest);
                     String base = ItemSerialization.toBase64(inv);
@@ -215,6 +293,7 @@ public class Main extends JavaPlugin {
     }
 
     private void saveKillerChestInventory() {
+        if(DeathChestListener.killerChests.keySet() == null) return;
         Set<Player> players = DeathChestListener.killerChests.keySet();
         for(Player p: players) {
             List<Location> locs = DeathChestListener.killerChests.get(p);
