@@ -18,4 +18,13 @@ public class LangStrings {
     public static String TimeOver;
     public static String TimeStartedKiller;
     public static String TimeOverKiller;
+    public static String StoredInHomeChest;
+    public static String RemoveBeforeBreak;
+    public static String Removed;
+    public static String HelpHome;
+    public static String OnlyPlayers;
+    public static String SetupHome;
+    public static String Cancelled;
+    public static String HomeChestSet;
+    public static String AlreadySet;
 }

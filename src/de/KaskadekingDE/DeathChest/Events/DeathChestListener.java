@@ -33,6 +33,8 @@ public class DeathChestListener implements Listener {
     public static HashMap<Chest, Inventory> chestInventory = new HashMap<Chest, Inventory>();
     public static HashMap<Player, Inventory> suppressInventoryOpenEvent = new HashMap<Player, Inventory>();
     public static HashMap<Location, Integer> chestRemover = new HashMap<Location, Integer>();
+    public static HashMap<Player, Location> homeChest = new HashMap<Player, Location>();
+
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onEntityDeath(EntityDeathEvent e) {
@@ -54,6 +56,22 @@ public class DeathChestListener implements Listener {
     private boolean placeDeathChest(final Player p, Location loc, List<ItemStack> drops) {
         if(Main.UsePermission && !p.hasPermission("deathchest.place")) {
             return false;
+        }
+        Location homeLoc = homeChestLoc(p);
+        if(homeLoc != null) {
+            Chest chest = (Chest)homeLoc.getWorld().getBlockAt(homeLoc).getState();
+            int empty = emptySlots(chest, true);
+            if(empty > drops.size()) {
+                Inventory homeInv = chestInventory.get(chest);
+                for(ItemStack drop: drops) {
+                    homeInv.addItem(drop);
+                }
+                drops.clear();
+                p.sendMessage(Main.Prefix + " " + LangStrings.StoredInHomeChest);
+                String base = ItemSerialization.toBase64(homeInv);
+                Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
+                return true;
+            }
         }
         if(playersDeathChests(p.getUniqueId().toString()) != null && Main.MaxChests != -1 && playersDeathChests(p.getUniqueId().toString()).size() >= Main.MaxChests) {
             p.sendMessage(Main.Prefix + " " + LangStrings.MaxExceeded);
@@ -96,6 +114,9 @@ public class DeathChestListener implements Listener {
         try {
             Object[] countArray = Main.plugin.getConfig().getConfigurationSection("death-chests." + p.getUniqueId()).getKeys(false).toArray();
             Object countObj = countArray[countArray.length-1];
+            if(countObj.toString() == "home-chest") {
+                countObj = countArray[countArray.length-2];
+            }
             count = Integer.parseInt(countObj.toString());
             count++;
         } catch(NullPointerException npe) {
@@ -238,10 +259,13 @@ public class DeathChestListener implements Listener {
             if(p2 == null) {
                 p2 = getKeyForKillerChest(loc);
                 if(p2 == null) {
-                    return;
+                    p2 = getKeyForHomeChest(loc);
+                    if(p2 == null) {
+                        return;
+                    }
                 }
             }
-            if(checkForDeathChest(p2, loc)) {
+            if(checkForDeathChest(p2, loc) || checkForHomeChest(loc, p2)) {
                 e.setCancelled(true);
                 openDeathChest(p, loc, e);
             } else {
@@ -254,6 +278,21 @@ public class DeathChestListener implements Listener {
 
     private void openDeathChest(Player p, Location loc, InventoryOpenEvent e) {
         if(Main.UsePermission && !p.hasPermission("deathchest.place")) {
+            return;
+        }
+        Player ownerHome = getKeyForHomeChest(loc);
+        Location homeLoc = homeChestLoc(p);
+        if(ownerHome != null) {
+            if(!ownerHome.equals(p) && !p.hasPermission("deathchest.protection.bypass")) {
+                p.sendMessage(Main.Prefix + " " + LangStrings.NotOwner);
+                e.setCancelled(true);
+                return;
+            }
+            if(homeLoc == null) return;
+            Chest chest = (Chest)homeLoc.getWorld().getBlockAt(homeLoc).getState();
+            Inventory inv = chestInventory.get(chest);
+            suppressInventoryOpenEvent.put(p, inv);
+            p.openInventory(inv);
             return;
         }
         Player owner = getKeyForDeathChest(loc);
@@ -293,10 +332,13 @@ public class DeathChestListener implements Listener {
             }
 
             Location loc = chest.getLocation();
-            if(getKeyForDeathChest(loc) == null && getKeyForKillerChest(loc) == null) return;
+            if(getKeyForDeathChest(loc) == null && getKeyForKillerChest(loc) == null && getKeyForHomeChest(loc) == null) return;
             Player p = getKeyForDeathChest(loc);
             if(p == null) {
                 p = getKeyForKillerChest(loc);
+                if(p == null) {
+                    p = getKeyForHomeChest(loc);
+                }
             }
             Player p2= (Player) e.getPlayer();
             if(checkForDeathChest(p, loc)) {
@@ -315,6 +357,8 @@ public class DeathChestListener implements Listener {
                     }
                 }
                 closeKillerChest(p, p2,((Chest) e.getInventory().getHolder()).getLocation(), e.getInventory().getHolder(), inv.getContents());
+            } else if(checkForHomeChest(loc, p)) {
+
             }
 
         }
@@ -371,7 +415,29 @@ public class DeathChestListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockBreak(BlockBreakEvent e) {
+        Location loc = e.getBlock().getLocation();
         if(e.getBlock().getType() == Material.CHEST) {
+            if(getKeyForHomeChest(e.getBlock().getLocation()) != null) {
+                Player key = getKeyForHomeChest(loc);
+                if(!key.equals(e.getPlayer())) {
+                    e.setCancelled(true);
+                    return;
+                }
+                Chest chest = (Chest)loc.getWorld().getBlockAt(loc).getState();
+                Inventory inv = chestInventory.get(chest);
+                for(ItemStack stack: inv.getContents()) {
+                    if(stack != null) {
+                        e.getPlayer().sendMessage(Main.Prefix + " " + LangStrings.RemoveBeforeBreak);
+                        e.setCancelled(true);
+                        return;
+                    }
+                }
+                e.getPlayer().sendMessage(Main.Prefix + " " + LangStrings.Removed);
+                chestInventory.remove(chest);
+                homeChest.remove(e.getPlayer());
+                Main.plugin.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest", null);
+                Main.plugin.saveConfig();
+            }
             if(getKeyForDeathChest(e.getBlock().getLocation()) != null | getKeyForKillerChest(e.getBlock().getLocation()) != null) {
                 e.getPlayer().sendMessage(Main.Prefix + " " + LangStrings.DontBreak);
                 e.setCancelled(true);
@@ -446,6 +512,7 @@ public class DeathChestListener implements Listener {
         ArrayList<Location> result = new ArrayList<Location>();
         try {
             for(String key: Main.plugin.getConfig().getConfigurationSection("death-chests." + sUuid).getKeys(false)) {
+                if(key.equals("home-chest")) continue;
                 int x;
                 int y;
                 int z;
@@ -494,6 +561,15 @@ public class DeathChestListener implements Listener {
         return null;
     }
 
+    private Player getKeyForHomeChest(Location loc) {
+        for(Player p: homeChest.keySet()) {
+            if(homeChest.get(p).equals(loc)) {
+                return p;
+            }
+        }
+        return  null;
+    }
+
 
     public static boolean checkForDeathChest(Player p, Location loc) {
         if(deathChests.containsKey(p)) {
@@ -511,5 +587,37 @@ public class DeathChestListener implements Listener {
             }
         }
         return false;
+    }
+
+    public static boolean checkForHomeChest(Location loc, Player p) {
+        if(homeChest.containsKey(p)) {
+            if(homeChest.get(p).equals(loc)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private Location homeChestLoc(Player p) {
+        if(homeChest.containsKey(p)) {
+            return homeChest.get(p);
+        }
+        return null;
+    }
+
+    private int emptySlots(Chest c, boolean doubleChest) {
+        int slots;
+        if(doubleChest) {
+            slots = 54;
+        } else {
+            slots = 27;
+        }
+        for(ItemStack is: c.getInventory().getContents()) {
+            if(is != null) {
+                slots--;
+            }
+        }
+        return slots;
     }
 }

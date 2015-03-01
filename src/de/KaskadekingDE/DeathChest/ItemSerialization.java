@@ -1,11 +1,6 @@
 package de.KaskadekingDE.DeathChest;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -84,7 +79,7 @@ public class ItemSerialization {
         return Base64Coder.encodeLines(outputStream.toByteArray());
     }
 
-    public static Inventory fromBase64(String data) {
+    public static Inventory fromBase64(String data) throws EOFException {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
         NBTTagCompound root = (NBTTagCompound) readNbt(new DataInputStream(inputStream), 0);
         new NBTTagCompound();

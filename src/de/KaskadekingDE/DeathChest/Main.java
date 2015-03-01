@@ -12,17 +12,21 @@ import de.KaskadekingDE.DeathChest.Config.KillerChestsConfig;
 import de.KaskadekingDE.DeathChest.Config.LangStrings;
 import de.KaskadekingDE.DeathChest.Config.LanguageConfig;
 import de.KaskadekingDE.DeathChest.Events.DeathChestListener;
+import de.KaskadekingDE.DeathChest.Events.HomeChestListener;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.EOFException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.logging.Logger;
@@ -50,6 +54,7 @@ public class Main extends JavaPlugin {
     public enum ChestStates {
         DeathChest,
         KillerChest,
+        HomeChest,
         None
     }
 
@@ -61,6 +66,7 @@ public class Main extends JavaPlugin {
         checkForProtocolLib();
         getCommand("deathchest").setExecutor(new DeathChestCommand());
         Bukkit.getPluginManager().registerEvents(new DeathChestListener(), this);
+        Bukkit.getPluginManager().registerEvents(new HomeChestListener(), this);
         PluginDescriptionFile pdf = getDescription();
         log.info("[DeathChest] DeathChest v" + pdf.getVersion() + " has been enabled! :)");
     }
@@ -129,6 +135,7 @@ public class Main extends JavaPlugin {
         log.info("[DeathChest] Saving chest inventorys... This can take a while!");
         saveDeathChestInventory();
         saveKillerChestInventory();
+        saveHomeChestInventory();
         this.plugin = null;
         log.info("[DeathChest] DeathChest has been disabled!");
     }
@@ -178,11 +185,19 @@ public class Main extends JavaPlugin {
         LangStrings.TimeOver = langConfig.getLangConfig().getString("time-is-up").replace('&', '§').replace("%s", Integer.toString(Seconds));
         LangStrings.TimeStartedKiller = langConfig.getLangConfig().getString("you-have-x-seconds-killer").replace('&', '§').replace("%s", Integer.toString(Seconds));
         LangStrings.TimeOverKiller = langConfig.getLangConfig().getString("time-is-up-killer").replace('&', '§').replace("%s", Integer.toString(Seconds));
+        LangStrings.StoredInHomeChest = langConfig.getLangConfig().getString("stored-in-home-chest").replace('&', '§');
+        LangStrings.RemoveBeforeBreak = langConfig.getLangConfig().getString("remove-loot-before-breaking").replace('&', '§');
+        LangStrings.Removed  = langConfig.getLangConfig().getString("removed-home-chest").replace('&', '§');
+        LangStrings.HelpHome  = langConfig.getLangConfig().getString("help-home").replace('&', '§');
+        LangStrings.OnlyPlayers = langConfig.getLangConfig().getString("only-players").replace('&', '§');
+        LangStrings.SetupHome = langConfig.getLangConfig().getString("setup-home-chest").replace('&', '§');
+        LangStrings.Cancelled = langConfig.getLangConfig().getString("cancelled").replace('&', '§');
+        LangStrings.HomeChestSet = langConfig.getLangConfig().getString("home-chest-set").replace('&', '§');
+        LangStrings.AlreadySet = langConfig.getLangConfig().getString("already-home-chest-set").replace('&', '§');
     }
 
     private void loadDeathChests() {
         try {
-
             for(String key: getConfig().getConfigurationSection("death-chests").getKeys(false)) {
                 List<Location> locations = new ArrayList<Location>();
                 Player player;
@@ -191,30 +206,81 @@ public class Main extends JavaPlugin {
                     Player p = Bukkit.getOfflinePlayer(uuid).getPlayer();
                     player = p;
                     for (String dc : getConfig().getConfigurationSection("death-chests." + key).getKeys(false)) {
+                        if(dc.equals("home-chest")) continue;
                         int x = getConfig().getInt("death-chests." + key + "." + dc + ".x");
                         int y = getConfig().getInt("death-chests." + key + "." + dc + ".y");
                         int z = getConfig().getInt("death-chests." + key + "." + dc + ".z");
                         String w = getConfig().getString("death-chests." + key + "." + dc + ".world");
-                        String base = getConfig().getString("death-chests." + key + "." + dc + ".inventory");
-                        Inventory inv = ItemSerialization.fromBase64(base);
+
+
                         World world;
                         try {
                             world = Bukkit.getWorld(w);
                         } catch(IllegalArgumentException ex) {
                             continue;
                         }
+
                         Location loc = new Location(world, x, y, z, 0.0F, 0.0F);
                         locations.add(loc);
                         if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST) {
                             Chest chest = (Chest)loc.getWorld().getBlockAt(loc).getState();
-                            DeathChestListener.chestInventory.put(chest, inv);
-                        }
+                            Inventory inv;
+                            try {
+                                String base = getConfig().getString("death-chests." + key + "." + dc + ".inventory");
+                                inv = ItemSerialization.fromBase64(base);
+                                DeathChestListener.chestInventory.put(chest, inv);
+                            } catch(NullPointerException | EOFException ex) {
 
+                            }
+
+                        }
                     }
+                    DeathChestListener.deathChests.put(player, locations);
+                    int xHome = getConfig().getInt("death-chests." + key + ".home-chest.x");
+                    int yHome = getConfig().getInt("death-chests." + key + ".home-chest.y");
+                    int zHome = getConfig().getInt("death-chests." + key + ".home-chest.z");
+                    String wHome = getConfig().getString("death-chests." + key + ".home-chest.world");
+                    String baseHome;
+                    if(getConfig().contains("death-chests." + key + ".home-chest.inventory")) {
+                        baseHome = getConfig().getString("death-chests." + key + ".home-chest.inventory");
+                    } else {
+                        baseHome = null;
+                    }
+
+                    Inventory invHome;
+                    if(baseHome != null) {
+                        invHome = ItemSerialization.fromBase64(baseHome);
+                    } else {
+                        invHome = null;
+                    }
+
+                    World worldHome;
+                    try {
+                        worldHome = Bukkit.getWorld(wHome);
+                    } catch(IllegalArgumentException ex) {
+                        continue;
+                    }
+                    Location locHome = new Location(worldHome, xHome, yHome, zHome);
+                    if(locHome.getWorld().getBlockAt(locHome).getType() == Material.CHEST) {
+                        Chest chest = (Chest)locHome.getWorld().getBlockAt(locHome).getState();
+                        DeathChestListener.homeChest.put(player, locHome);
+                        Inventory inv = Bukkit.createInventory(chest.getInventory().getHolder(), 54, "Home Chest");
+                        if(invHome != null) {
+                            for(ItemStack stack: invHome.getContents()) {
+                                if(stack != null) {
+                                    inv.addItem(stack);
+                                }
+                            }
+                        }
+                        DeathChestListener.chestInventory.put(chest, inv);
+                    }
+
                 } catch(NullPointerException ex) {
                     continue;
+                } catch (EOFException e) {
+                    e.printStackTrace();
                 }
-                DeathChestListener.deathChests.put(player, locations);
+
             }
 
         } catch(NullPointerException ex) {
@@ -253,16 +319,37 @@ public class Main extends JavaPlugin {
                         }
 
                     }
+                    DeathChestListener.killerChests.put(player, locations);
                 } catch(NullPointerException ex) {
                     continue;
+                } catch (EOFException e) {
+                    e.printStackTrace();
                 }
-                DeathChestListener.killerChests.put(player, locations);
+
             }
         } catch(NullPointerException ex) {
             return;
         }
     }
 
+    private void saveHomeChestInventory() {
+        if(DeathChestListener.homeChest.keySet() == null) return;
+        Set<Player> players = DeathChestListener.homeChest.keySet();
+        for(Player p: players) {
+            Location loc = DeathChestListener.homeChest.get(p);
+                if(chestState(p, loc) != ChestStates.HomeChest) {
+                    continue;
+                } else {
+                    if (loc.getWorld().getBlockAt(loc).getState() == null) continue;
+                    Chest chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
+                    Inventory inv = DeathChestListener.chestInventory.get(chest);
+                    String base = ItemSerialization.toBase64(inv);
+
+                    getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
+                    saveConfig();
+                }
+        }
+    }
 
     private void saveDeathChestInventory() {
         if(DeathChestListener.deathChests.keySet() == null) return;
@@ -314,10 +401,12 @@ public class Main extends JavaPlugin {
     }
 
     private ChestStates chestState(Player p, Location loc) {
-        if(DeathChestListener.deathChests.get(p).contains(loc)) {
+        if(DeathChestListener.deathChests.containsKey(p) && DeathChestListener.deathChests.get(p).contains(loc)) {
             return ChestStates.DeathChest;
-        } else if(DeathChestListener.killerChests.get(p).contains(loc)) {
+        } else if(DeathChestListener.killerChests.containsKey(p) &&DeathChestListener.killerChests.get(p).contains(loc)) {
             return ChestStates.KillerChest;
+        } else if(DeathChestListener.homeChest.containsKey(p) &&DeathChestListener.homeChest.get(p).equals(loc)) {
+            return ChestStates.HomeChest;
         } else {
             return ChestStates.None;
         }
