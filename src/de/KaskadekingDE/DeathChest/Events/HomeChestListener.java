@@ -70,9 +70,14 @@ public class HomeChestListener implements Listener {
                 return;
             }
             Player p = (Player) e.getWhoClicked();
-            if(!DeathChestListener.checkForHomeChest(ch.getLocation(),p)) {
+            try {
+                if(!DeathChestListener.checkForHomeChest(ch.getLocation(),p)) {
+                    return;
+                }
+            } catch(NullPointerException npe) {
                 return;
             }
+
             if (e.getRawSlot() == e.getSlot() && e.getInventory().getType() == InventoryType.CHEST) {
                 if(e.getCursor().getType()!=Material.AIR){
                     e.setCancelled(true);

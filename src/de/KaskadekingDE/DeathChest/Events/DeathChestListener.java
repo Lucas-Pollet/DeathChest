@@ -1,7 +1,7 @@
 package de.KaskadekingDE.DeathChest.Events;
 
 import de.KaskadekingDE.DeathChest.Config.LangStrings;
-import de.KaskadekingDE.DeathChest.ItemSerialization;
+import de.KaskadekingDE.DeathChest.ItemSerialization.v1_8_R1.ItemSerialization;
 import de.KaskadekingDE.DeathChest.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -68,7 +68,7 @@ public class DeathChestListener implements Listener {
                 }
                 drops.clear();
                 p.sendMessage(Main.Prefix + " " + LangStrings.StoredInHomeChest);
-                String base = ItemSerialization.toBase64(homeInv);
+                String base = Main.Serialization.toBase64(homeInv);
                 Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
                 return true;
             }
@@ -130,7 +130,7 @@ public class DeathChestListener implements Listener {
             locations = new ArrayList<Location>();
         locations.add(blockLoc);
         deathChests.put(p, locations);
-        String base = ItemSerialization.toBase64(inv);
+        String base = Main.Serialization.toBase64(inv);
         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".x", x);
         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".y", y);
         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".z", z);
@@ -214,7 +214,7 @@ public class DeathChestListener implements Listener {
         }
         tmp.add(blockLoc);
         killerChests.put(killer, tmp);
-        String base = ItemSerialization.toBase64(inv);
+        String base = Main.Serialization.toBase64(inv);
         Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".x", x);
         Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".y", y);
         Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".z", z);
@@ -331,7 +331,12 @@ public class DeathChestListener implements Listener {
                 return;
             }
 
-            Location loc = chest.getLocation();
+            Location loc;
+            try {
+                loc = chest.getLocation();
+            } catch(NullPointerException npe) {
+                return;
+            }
             if(getKeyForDeathChest(loc) == null && getKeyForKillerChest(loc) == null && getKeyForHomeChest(loc) == null) return;
             Player p = getKeyForDeathChest(loc);
             if(p == null) {

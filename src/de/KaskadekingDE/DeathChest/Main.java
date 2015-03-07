@@ -5,7 +5,6 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import de.KaskadekingDE.DeathChest.Commands.DeathChestCommand;
 import de.KaskadekingDE.DeathChest.Config.KillerChestsConfig;
@@ -13,11 +12,12 @@ import de.KaskadekingDE.DeathChest.Config.LangStrings;
 import de.KaskadekingDE.DeathChest.Config.LanguageConfig;
 import de.KaskadekingDE.DeathChest.Events.DeathChestListener;
 import de.KaskadekingDE.DeathChest.Events.HomeChestListener;
+import de.KaskadekingDE.DeathChest.ItemSerialization.IItemSerialization;
+import de.KaskadekingDE.DeathChest.ItemSerialization.v1_8_R1.ItemSerialization;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -27,7 +27,6 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.EOFException;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -51,6 +50,8 @@ public class Main extends JavaPlugin {
     public static List<?> whitelistedBlocks;
     private static String[] defaultList = {"AIR", "STONE", "DEAD_BUSH", "LEAVES", "RED_ROSE", "YELLOW_FLOWER", "VINE", "LONG_GRASS", "TALL_GRASS"};
 
+    public static IItemSerialization Serialization;
+
     public enum ChestStates {
         DeathChest,
         KillerChest,
@@ -59,6 +60,16 @@ public class Main extends JavaPlugin {
     }
 
     public void onEnable() {
+        String version = Bukkit.getServer().getClass().getPackage().getName().substring(Bukkit.getServer().getClass().getPackage().getName().lastIndexOf(".") + 1);
+        if(version.startsWith("v1_8_R1")) {
+            Serialization = new de.KaskadekingDE.DeathChest.ItemSerialization.v1_8_R1.ItemSerialization();
+        } else if(version.startsWith("v1_8_R2")) {
+            Serialization = new de.KaskadekingDE.DeathChest.ItemSerialization.v1_8_R2.ItemSerialization();
+        } else {
+            log.severe("This server version is not supported! (" + version + ")");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
         this.plugin = this;
         langConfig = new LanguageConfig(this);
         killerConfig = new KillerChestsConfig(this);
@@ -227,7 +238,7 @@ public class Main extends JavaPlugin {
                             Inventory inv;
                             try {
                                 String base = getConfig().getString("death-chests." + key + "." + dc + ".inventory");
-                                inv = ItemSerialization.fromBase64(base);
+                                inv = Serialization.fromBase64(base);
                                 DeathChestListener.chestInventory.put(chest, inv);
                             } catch(NullPointerException | EOFException ex) {
 
@@ -249,7 +260,7 @@ public class Main extends JavaPlugin {
 
                     Inventory invHome;
                     if(baseHome != null) {
-                        invHome = ItemSerialization.fromBase64(baseHome);
+                        invHome = Serialization.fromBase64(baseHome);
                     } else {
                         invHome = null;
                     }
@@ -303,7 +314,7 @@ public class Main extends JavaPlugin {
                         int z = getConfig().getInt("death-chests." + key + "." + dc + ".z");
                         String w = getConfig().getString("death-chests." + key + "." + dc + ".world");
                         String base = getConfig().getString("death-chests." + key + "." + dc + ".inventory");
-                        Inventory inv = ItemSerialization.fromBase64(base);
+                        Inventory inv = Serialization.fromBase64(base);
 
                         World world;
                         try {
@@ -343,7 +354,7 @@ public class Main extends JavaPlugin {
                     if (loc.getWorld().getBlockAt(loc).getState() == null) continue;
                     Chest chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
                     Inventory inv = DeathChestListener.chestInventory.get(chest);
-                    String base = ItemSerialization.toBase64(inv);
+                    String base = Serialization.toBase64(inv);
 
                     getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
                     saveConfig();
@@ -370,7 +381,7 @@ public class Main extends JavaPlugin {
                     if(dcc == -1) continue;
                     Chest chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
                     Inventory inv = DeathChestListener.chestInventory.get(chest);
-                    String base = ItemSerialization.toBase64(inv);
+                    String base = Serialization.toBase64(inv);
 
                     getConfig().set("death-chests." + p.getUniqueId() + "." + dcc + ".inventory", base);
                     saveConfig();
@@ -391,7 +402,7 @@ public class Main extends JavaPlugin {
                     int dcc = DeathChestListener.KillerChestCount(loc, p.getUniqueId());
                     Chest chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
                     Inventory inv = DeathChestListener.chestInventory.get(chest);
-                    String base = ItemSerialization.toBase64(inv);
+                    String base = Serialization.toBase64(inv);
 
                     killerConfig.getKillerConfig().set("death-chests." + p.getUniqueId() + "." + dcc + ".inventory", base);
                     killerConfig.saveKillerConfig();
