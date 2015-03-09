@@ -1,3 +1,4 @@
+prefix: '&6[&cDeathChest&6]'
 help-notice: '&cTo see alls commands type /dc help'
 help-page: '&cDeathChest Help Page'
 help-reload: '&aReloads the config file'
@@ -24,3 +25,4 @@ setup-home-chest: '&aRight-click on a chest to make it to your home chest! Left-
 cancelled: '&cCancelled!'
 home-chest-set: '&aYou successfully set your home chest!'
 already-home-chest-set: '&cYou already have a home chest! Empty and break the old chest to place a new one'
+not-enabled-on-this-world: '&cDeathChest''s and HomeChest''s are not enabled on this world!'

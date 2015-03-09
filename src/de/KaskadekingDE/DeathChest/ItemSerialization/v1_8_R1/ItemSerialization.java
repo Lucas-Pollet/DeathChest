@@ -4,7 +4,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import de.KaskadekingDE.DeathChest.ItemSerialization.IItemSerialization;
+import de.KaskadekingDE.DeathChest.ItemSerialization.ISerialization;
 import net.minecraft.server.v1_8_R1.NBTBase;
 import net.minecraft.server.v1_8_R1.NBTCompressedStreamTools;
 import net.minecraft.server.v1_8_R1.NBTReadLimiter;
@@ -27,7 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 
 // For 1.8.1
-public class ItemSerialization implements IItemSerialization {
+public class ItemSerialization implements ISerialization {
     // Current serialization version - we will use this to handle compatiblity
     private static final int VERSION = 1;
     // Types we can serialize

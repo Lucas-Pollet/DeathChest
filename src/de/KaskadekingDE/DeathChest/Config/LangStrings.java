@@ -1,6 +1,7 @@
 package de.KaskadekingDE.DeathChest.Config;
 
 public class LangStrings {
+    public static String Prefix;
     public static String HelpNotice;
     public static String HelpPage;
     public static String HelpReload;
@@ -27,4 +28,5 @@ public class LangStrings {
     public static String Cancelled;
     public static String HomeChestSet;
     public static String AlreadySet;
+    public static String NotEnabled;
 }

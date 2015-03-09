@@ -3,6 +3,7 @@ package de.KaskadekingDE.DeathChest.Commands;
 import de.KaskadekingDE.DeathChest.Config.LangStrings;
 import de.KaskadekingDE.DeathChest.Events.HomeChestListener;
 import de.KaskadekingDE.DeathChest.Main;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -12,28 +13,28 @@ public class DeathChestCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender cs, Command cmd, String label, String[] args) {
         if(args.length == 0) {
-            cs.sendMessage(Main.Prefix + " §aPlugin made by KaskadekingDE.");
+            cs.sendMessage(LangStrings.Prefix + " §aPlugin made by KaskadekingDE.");
             cs.sendMessage(LangStrings.HelpNotice);
             return true;
         }
         if(args[0].equalsIgnoreCase("help")) {
             if(!cs.hasPermission("deathchest.help")) {
-                cs.sendMessage(Main.Prefix + LangStrings.NoPermissions);
+                cs.sendMessage(LangStrings.Prefix + LangStrings.NoPermissions);
                 return true;
             }
-            cs.sendMessage(Main.Prefix + " " + LangStrings.HelpPage + " (1/1):");
+            cs.sendMessage(LangStrings.Prefix + " " + LangStrings.HelpPage + " (1/1):");
             cs.sendMessage("§9/dc reload §7- " + LangStrings.HelpReload);
             cs.sendMessage("§9/dc help   §7- " + LangStrings.HelpHelp);
             cs.sendMessage("§9/dc home   §7- " + LangStrings.HelpHome);
             return true;
         } else if(args[0].equalsIgnoreCase("reload")) {
             if(!cs.hasPermission("deathchest.reload")) {
-                cs.sendMessage(Main.Prefix + LangStrings.NoPermissions);
+                cs.sendMessage(LangStrings.Prefix + LangStrings.NoPermissions);
                 return true;
             }
             Main.plugin.reloadConfig();
             Main.plugin.loadConfig();
-            cs.sendMessage(Main.Prefix + " " + LangStrings.ConfigReloaded);
+            cs.sendMessage(LangStrings.Prefix + " " + LangStrings.ConfigReloaded);
             return true;
         } else if(args[0].equalsIgnoreCase("home")) {
             if(!(cs instanceof Player)) {
@@ -41,15 +42,20 @@ public class DeathChestCommand implements CommandExecutor {
                 return true;
             }
             if(Main.UsePermission && !cs.hasPermission("deathchest.home")) {
-                cs.sendMessage(Main.Prefix + LangStrings.NoPermissions);
+                cs.sendMessage(LangStrings.Prefix + LangStrings.NoPermissions);
                 return true;
             }
             Player p = (Player) cs;
             if(checkAlreadyHome(p)) {
-                cs.sendMessage(Main.Prefix + " " + LangStrings.AlreadySet);
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.AlreadySet);
                 return true;
             }
-            cs.sendMessage(Main.Prefix + " " + LangStrings.SetupHome);
+            World w = p.getWorld();
+            if(!Main.enabledWorlds.contains(w) && !Main.ExecludeHomeChestFromWhitelist) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.NotEnabled);
+                return true;
+            }
+            cs.sendMessage(LangStrings.Prefix + " " + LangStrings.SetupHome);
 
             HomeChestListener.readyPlayers.add(p);
             return true;

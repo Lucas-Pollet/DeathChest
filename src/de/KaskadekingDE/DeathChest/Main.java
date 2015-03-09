@@ -1,5 +1,6 @@
 package de.KaskadekingDE.DeathChest;
 
+import com.avaje.ebeaninternal.server.lib.sql.Prefix;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
@@ -12,8 +13,7 @@ import de.KaskadekingDE.DeathChest.Config.LangStrings;
 import de.KaskadekingDE.DeathChest.Config.LanguageConfig;
 import de.KaskadekingDE.DeathChest.Events.DeathChestListener;
 import de.KaskadekingDE.DeathChest.Events.HomeChestListener;
-import de.KaskadekingDE.DeathChest.ItemSerialization.IItemSerialization;
-import de.KaskadekingDE.DeathChest.ItemSerialization.v1_8_R1.ItemSerialization;
+import de.KaskadekingDE.DeathChest.ItemSerialization.ISerialization;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -38,7 +38,6 @@ public class Main extends JavaPlugin {
     Logger log = Logger.getLogger("Minecraft");
     public static ProtocolManager protocol;
 
-    public static String Prefix;
     public static boolean UsePermission;
     public static boolean OnlyReplaceWhitelistedBlocks;
     public static boolean ShowCoords;
@@ -46,11 +45,14 @@ public class Main extends JavaPlugin {
     public static boolean ProtectedChest;
     public static int MaxChests;
     public static int Seconds;
+    public static boolean ExecludeHomeChestFromWhitelist;
     public static boolean RemoveChestAfterXSeconds;
     public static List<?> whitelistedBlocks;
+    public static List<World> enabledWorlds = new ArrayList<World>();
     private static String[] defaultList = {"AIR", "STONE", "DEAD_BUSH", "LEAVES", "RED_ROSE", "YELLOW_FLOWER", "VINE", "LONG_GRASS", "TALL_GRASS"};
+    private static String[] defaultWorld = {"world"};
 
-    public static IItemSerialization Serialization;
+    public static ISerialization Serialization;
 
     public enum ChestStates {
         DeathChest,
@@ -160,7 +162,9 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("remove-empty-death-chest", true);
         getConfig().addDefault("protected-death-chest", false);
         getConfig().addDefault("remove-death-chest-after-x-seconds", true);
+        getConfig().addDefault("exclude-home-chests-from-whitelist", false);
         getConfig().addDefault("time-in-seconds", 60);
+        getConfig().addDefault("enabled-worlds", Arrays.asList(defaultWorld));
         getConfig().addDefault("whitelisted-blocks", Arrays.asList(defaultList));
         langConfig.saveDefaultLangConfig();
         langConfig.reloadLangConfig();
@@ -169,7 +173,6 @@ public class Main extends JavaPlugin {
         saveConfig();
         loadDeathChests();
         loadKillerChests();
-        Prefix = getConfig().getString("prefix").replace('&', '§').trim();
         UsePermission = getConfig().getBoolean("need-permission");
         OnlyReplaceWhitelistedBlocks = getConfig().getBoolean("only-replace-whitelisted-blocks");
         ShowCoords = getConfig().getBoolean("show-coords");
@@ -179,6 +182,20 @@ public class Main extends JavaPlugin {
         whitelistedBlocks = getConfig().getList("whitelisted-blocks");
         RemoveChestAfterXSeconds = getConfig().getBoolean("remove-death-chest-after-x-seconds");
         Seconds = getConfig().getInt("time-in-seconds");
+        ExecludeHomeChestFromWhitelist = getConfig().getBoolean("exclude-home-chests-from-whitelist");
+        List<?> worlds = getConfig().getList("enabled-worlds");
+        for(Object obj: worlds) {
+            String name = obj.toString();
+            try {
+                World w = Bukkit.getWorld(name);
+                enabledWorlds.add(w);
+            } catch(IllegalArgumentException ex) {
+                // World doesn't exists
+                //continue;
+            }
+        }
+
+        LangStrings.Prefix = langConfig.getLangConfig().getString("prefix").replace('&', '§').trim();
         LangStrings.ChestRemoved = langConfig.getLangConfig().getString("death-chest-removed").replace('&', '§');
         LangStrings.ChestSpawned = langConfig.getLangConfig().getString("death-chest-spawned").replace('&', '§');
         LangStrings.ConfigReloaded = langConfig.getLangConfig().getString("config-reloaded").replace('&', '§');
@@ -205,6 +222,7 @@ public class Main extends JavaPlugin {
         LangStrings.Cancelled = langConfig.getLangConfig().getString("cancelled").replace('&', '§');
         LangStrings.HomeChestSet = langConfig.getLangConfig().getString("home-chest-set").replace('&', '§');
         LangStrings.AlreadySet = langConfig.getLangConfig().getString("already-home-chest-set").replace('&', '§');
+        LangStrings.NotEnabled = langConfig.getLangConfig().getString("not-enabled-on-this-world").replace('&', '§');
     }
 
     private void loadDeathChests() {
@@ -406,6 +424,7 @@ public class Main extends JavaPlugin {
 
                     killerConfig.getKillerConfig().set("death-chests." + p.getUniqueId() + "." + dcc + ".inventory", base);
                     killerConfig.saveKillerConfig();
+
                 }
             }
         }

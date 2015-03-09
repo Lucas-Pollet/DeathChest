@@ -45,14 +45,14 @@ public class HomeChestListener implements Listener {
                     Inventory inv = Bukkit.createInventory(ch.getInventory().getHolder(), 54, "Home Chest");
                     DeathChestListener.chestInventory.put(ch, inv);
                     DeathChestListener.homeChest.put(e.getPlayer(), b.getLocation());
-                    e.getPlayer().sendMessage(Main.Prefix + " " + LangStrings.HomeChestSet);
+                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.HomeChestSet);
                     readyPlayers.remove(e.getPlayer());
                     e.setCancelled(true);
                 }
             }
         } else if(e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK) {
             if(readyPlayers.contains(e.getPlayer())) {
-                e.getPlayer().sendMessage(Main.Prefix + " " + LangStrings.Cancelled);
+                e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.Cancelled);
                 readyPlayers.remove(e.getPlayer());
                 e.setCancelled(true);
             }

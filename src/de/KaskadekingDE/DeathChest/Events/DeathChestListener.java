@@ -42,6 +42,7 @@ public class DeathChestListener implements Listener {
         if(e.getDrops() == null ||e.getDrops().size() == 0) {
             return;
         }
+
         if(e.getEntity().getKiller() == null) {
             if(placeDeathChest((Player)e.getEntity(), e.getEntity().getLocation(), e.getDrops())) {
                 e.getDrops().clear();
@@ -57,6 +58,8 @@ public class DeathChestListener implements Listener {
         if(Main.UsePermission && !p.hasPermission("deathchest.place")) {
             return false;
         }
+        World w = loc.getWorld();
+
         Location homeLoc = homeChestLoc(p);
         if(homeLoc != null) {
             Chest chest = (Chest)homeLoc.getWorld().getBlockAt(homeLoc).getState();
@@ -67,14 +70,17 @@ public class DeathChestListener implements Listener {
                     homeInv.addItem(drop);
                 }
                 drops.clear();
-                p.sendMessage(Main.Prefix + " " + LangStrings.StoredInHomeChest);
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.StoredInHomeChest);
                 String base = Main.Serialization.toBase64(homeInv);
                 Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
                 return true;
             }
         }
+        if(!Main.enabledWorlds.contains(w)) {
+            return false;
+        }
         if(playersDeathChests(p.getUniqueId().toString()) != null && Main.MaxChests != -1 && playersDeathChests(p.getUniqueId().toString()).size() >= Main.MaxChests) {
-            p.sendMessage(Main.Prefix + " " + LangStrings.MaxExceeded);
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.MaxExceeded);
             return false;
         }
 
@@ -89,7 +95,7 @@ public class DeathChestListener implements Listener {
                 }
             }
             if(!placingSuccessful) {
-                p.sendMessage(Main.Prefix + " " + LangStrings.FailedPlacing);
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacing);
                 return false;
             }
 
@@ -105,7 +111,7 @@ public class DeathChestListener implements Listener {
         chestInventory.put(deathChest, inv);
         if(Main.ShowCoords) {
             String message = LangStrings.ChestSpawned.replace("%x", Integer.toString(blockLoc.getBlockX())).replace("%y", Integer.toString(blockLoc.getBlockY())).replace("%z", Integer.toString(blockLoc.getBlockZ()));
-            p.sendMessage(Main.Prefix + " " + message);
+            p.sendMessage(LangStrings.Prefix + " " + message);
         }
         int x = blockLoc.getBlockX();
         int y = blockLoc.getBlockY();
@@ -127,7 +133,7 @@ public class DeathChestListener implements Listener {
         List<Location> locations;
         locations = deathChests.get(p);
         if(locations == null)
-            locations = new ArrayList<Location>();
+            locations = new ArrayList<>();
         locations.add(blockLoc);
         deathChests.put(p, locations);
         String base = Main.Serialization.toBase64(inv);
@@ -139,7 +145,7 @@ public class DeathChestListener implements Listener {
         Main.plugin.saveConfig();
         if(Main.RemoveChestAfterXSeconds) {
 
-            p.sendMessage(Main.Prefix + " " + LangStrings.TimeStarted);
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.TimeStarted);
             int task = Bukkit.getScheduler().scheduleSyncDelayedTask(Main.plugin, new Runnable() {
                 @Override
                 public void run() {
@@ -152,7 +158,7 @@ public class DeathChestListener implements Listener {
                         Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + dcc, null);
                         Main.plugin.saveConfig();
                         chestRemover.remove(blockLoc);
-                        p.sendMessage(Main.Prefix + " " + LangStrings.TimeOver);
+                        p.sendMessage(LangStrings.Prefix + " " + LangStrings.TimeOver);
                     }
                 }
             }, Main.Seconds * 20L);
@@ -166,6 +172,10 @@ public class DeathChestListener implements Listener {
             return false;
         }
         Location deathLoc = loc;
+        World w = loc.getWorld();
+        if(!Main.enabledWorlds.contains(w)) {
+            return false;
+        }
         boolean placeingSuccessful = false;
         if(Main.OnlyReplaceWhitelistedBlocks) {
             for(Object b: Main.whitelistedBlocks) {
@@ -177,7 +187,7 @@ public class DeathChestListener implements Listener {
                 }
             }
             if(!placeingSuccessful) {
-                killer.sendMessage(Main.Prefix + " " + LangStrings.FailedPlacing);
+                killer.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacing);
                 return false;
             }
         }
@@ -221,9 +231,9 @@ public class DeathChestListener implements Listener {
         Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".world", killer.getWorld().getName());
         Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".inventory", base);
         Main.killerConfig.saveKillerConfig();
-        killer.sendMessage(Main.Prefix + " " + LangStrings.VictimsLootStored);
+        killer.sendMessage(LangStrings.Prefix + " " + LangStrings.VictimsLootStored);
         if(Main.RemoveChestAfterXSeconds) {
-            killer.sendMessage(Main.Prefix + " " + LangStrings.TimeStartedKiller);
+            killer.sendMessage(LangStrings.Prefix + " " + LangStrings.TimeStartedKiller);
             int task = Bukkit.getScheduler().scheduleSyncDelayedTask(Main.plugin, new Runnable() {
                 @Override
                 public void run() {
@@ -235,7 +245,7 @@ public class DeathChestListener implements Listener {
                         chestInventory.remove(blockLoc.getWorld().getBlockAt(blockLoc).getState());
                         Main.plugin.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + dcc, null);
                         Main.plugin.killerConfig.saveKillerConfig();
-                        killer.sendMessage(Main.Prefix + " " + LangStrings.TimeOverKiller);
+                        killer.sendMessage(LangStrings.Prefix + " " + LangStrings.TimeOverKiller);
                     }
                 }
             }, Main.Seconds * 20L);
@@ -284,7 +294,7 @@ public class DeathChestListener implements Listener {
         Location homeLoc = homeChestLoc(p);
         if(ownerHome != null) {
             if(!ownerHome.equals(p) && !p.hasPermission("deathchest.protection.bypass")) {
-                p.sendMessage(Main.Prefix + " " + LangStrings.NotOwner);
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.NotOwner);
                 e.setCancelled(true);
                 return;
             }
@@ -298,7 +308,7 @@ public class DeathChestListener implements Listener {
         Player owner = getKeyForDeathChest(loc);
         if(owner != null) {
             if(Main.ProtectedChest && !p.equals(owner) && !p.hasPermission("deathchest.protection.bypass")) {
-                p.sendMessage(Main.Prefix + " " + LangStrings.NotOwner);
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.NotOwner);
             } else {
                 Inventory inv = chestInventory.get(loc.getWorld().getBlockAt(loc).getState());
                 suppressInventoryOpenEvent.put(p, inv);
@@ -389,7 +399,7 @@ public class DeathChestListener implements Listener {
                     chestInventory.remove(loc.getWorld().getBlockAt(loc).getState());
                     Main.plugin.getConfig().set("death-chests." + owner.getUniqueId() + "." + dcc, null);
                     Main.plugin.saveConfig();
-                    p.sendMessage(Main.Prefix + " " + LangStrings.ChestRemoved);
+                    p.sendMessage(LangStrings.Prefix + " " + LangStrings.ChestRemoved);
                     break;
                 } else {
                     continue;
@@ -432,19 +442,19 @@ public class DeathChestListener implements Listener {
                 Inventory inv = chestInventory.get(chest);
                 for(ItemStack stack: inv.getContents()) {
                     if(stack != null) {
-                        e.getPlayer().sendMessage(Main.Prefix + " " + LangStrings.RemoveBeforeBreak);
+                        e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveBeforeBreak);
                         e.setCancelled(true);
                         return;
                     }
                 }
-                e.getPlayer().sendMessage(Main.Prefix + " " + LangStrings.Removed);
+                e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.Removed);
                 chestInventory.remove(chest);
                 homeChest.remove(e.getPlayer());
                 Main.plugin.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest", null);
                 Main.plugin.saveConfig();
             }
             if(getKeyForDeathChest(e.getBlock().getLocation()) != null | getKeyForKillerChest(e.getBlock().getLocation()) != null) {
-                e.getPlayer().sendMessage(Main.Prefix + " " + LangStrings.DontBreak);
+                e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.DontBreak);
                 e.setCancelled(true);
             }
         }
