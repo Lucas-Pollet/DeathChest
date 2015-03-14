@@ -26,6 +26,8 @@ deathchest.place - Allows user to place a death chest.
 deathchest.kill.place - If player kills another player a chest will be spawned without that the victim needs to have a permission.
 
 deathchest.protection.bypass - Allows user to bypass death chest protection
+
+deathchest.home - Allows user to set their home chest with /dc home
 ```
 
 ### Known Issues:
@@ -33,7 +35,7 @@ deathchest.protection.bypass - Allows user to bypass death chest protection
 - Timer to remove death chests after specific timespan will be cancelled on reload/stop.
 
 ### Current version
-1.0
+1.5.2
 ### Todo's
 
  - ~~Add permission node to bypass protection~~
@@ -41,8 +43,7 @@ deathchest.protection.bypass - Allows user to bypass death chest protection
  - ~~Make it compatible with Java 7~~
  
  - ~~Added whitelist for blocks~~
- 
- - Add SQLite support
+
  
  - Have any ideas? [Go here](https://github.com/KaskadekingDE/DeathChest/issues/new "New Issue - DeathChest") to create a new issue :)
 

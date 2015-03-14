@@ -29,4 +29,5 @@ public class LangStrings {
     public static String HomeChestSet;
     public static String AlreadySet;
     public static String NotEnabled;
+    public static String ChestAlreadyUsed;
 }

@@ -32,6 +32,13 @@ public class HomeChestListener implements Listener {
             Block b = e.getClickedBlock();
             if(b.getType() == Material.CHEST) {
                 if(readyPlayers.contains(e.getPlayer())) {
+                    Chest ch = (Chest) b.getState();
+                    if(DeathChestListener.homeChest.containsValue(b.getLocation())) {
+                        e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.ChestAlreadyUsed);
+                        readyPlayers.remove(e.getPlayer());
+                        e.setCancelled(true);
+                        return;
+                    }
                     int x = b.getX();
                     int y = b.getY();
                     int z = b.getZ();
@@ -41,7 +48,7 @@ public class HomeChestListener implements Listener {
                     Main.plugin.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest.z", z);
                     Main.plugin.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest.world", w.getName());
                     Main.plugin.saveConfig();
-                    Chest ch = (Chest) b.getState();
+
                     Inventory inv = Bukkit.createInventory(ch.getInventory().getHolder(), 54, "Home Chest");
                     DeathChestListener.chestInventory.put(ch, inv);
                     DeathChestListener.homeChest.put(e.getPlayer(), b.getLocation());
