@@ -224,6 +224,9 @@ public class Main extends JavaPlugin {
         LangStrings.AlreadySet = langConfig.getLangConfig().getString("already-home-chest-set").replace('&', '§');
         LangStrings.NotEnabled = langConfig.getLangConfig().getString("not-enabled-on-this-world").replace('&', '§');
         LangStrings.ChestAlreadyUsed = langConfig.getLangConfig().getString("chest-already-used-by-another-player").replace('&', '§');
+        LangStrings.CantPlaceChestNearChest = langConfig.getLangConfig().getString("cant-place-chest-near-death-chests").replace('&', '§');
+        LangStrings.CantPlaceDeathChest = langConfig.getLangConfig().getString("cant-place-deathchest-near-chest").replace('&', '§');
+        LangStrings.CantPlaceKillerChest= langConfig.getLangConfig().getString("cant-place-killerchest-near-chest").replace('&', '§');
     }
 
     private void loadDeathChests() {
@@ -260,7 +263,6 @@ public class Main extends JavaPlugin {
                                 inv = Serialization.fromBase64(base);
                                 DeathChestListener.chestInventory.put(chest, inv);
                             } catch(NullPointerException | EOFException ex) {
-
                             }
 
                         }

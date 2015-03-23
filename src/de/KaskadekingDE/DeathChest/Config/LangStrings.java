@@ -30,4 +30,7 @@ public class LangStrings {
     public static String AlreadySet;
     public static String NotEnabled;
     public static String ChestAlreadyUsed;
+    public static String CantPlaceChestNearChest;
+    public static String CantPlaceKillerChest;
+    public static String CantPlaceDeathChest;
 }

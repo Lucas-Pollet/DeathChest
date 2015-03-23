@@ -1,6 +1,7 @@
 package de.KaskadekingDE.DeathChest.Events;
 
 import de.KaskadekingDE.DeathChest.Config.LangStrings;
+import de.KaskadekingDE.DeathChest.Helper;
 import de.KaskadekingDE.DeathChest.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -32,6 +33,10 @@ public class HomeChestListener implements Listener {
             Block b = e.getClickedBlock();
             if(b.getType() == Material.CHEST) {
                 if(readyPlayers.contains(e.getPlayer())) {
+                    if(Helper.IsDoubleChest(b)) {
+                        e.setCancelled(true);
+                        return;
+                    }
                     Chest ch = (Chest) b.getState();
                     if(DeathChestListener.homeChest.containsValue(b.getLocation())) {
                         e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.ChestAlreadyUsed);

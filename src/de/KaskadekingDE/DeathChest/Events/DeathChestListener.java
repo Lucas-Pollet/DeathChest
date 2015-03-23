@@ -1,17 +1,20 @@
 package de.KaskadekingDE.DeathChest.Events;
 
 import de.KaskadekingDE.DeathChest.Config.LangStrings;
+import de.KaskadekingDE.DeathChest.Helper;
 import de.KaskadekingDE.DeathChest.ItemSerialization.v1_8_R1.ItemSerialization;
 import de.KaskadekingDE.DeathChest.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
@@ -69,7 +72,6 @@ public class DeathChestListener implements Listener {
                 for(ItemStack drop: drops) {
                     homeInv.addItem(drop);
                 }
-                drops.clear();
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.StoredInHomeChest);
                 String base = Main.Serialization.toBase64(homeInv);
                 Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
@@ -83,7 +85,11 @@ public class DeathChestListener implements Listener {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.MaxExceeded);
             return false;
         }
-
+        Location nearChest = Helper.ChestNearLocation(loc);
+        if(nearChest != null) {
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantPlaceDeathChest);
+            return false;
+        }
         Location deathLoc = loc;
         boolean placingSuccessful = false;
         if(Main.OnlyReplaceWhitelistedBlocks) {
@@ -107,7 +113,6 @@ public class DeathChestListener implements Listener {
         for(ItemStack drop: drops) {
             inv.addItem(drop);
         }
-        drops.clear();
         chestInventory.put(deathChest, inv);
         if(Main.ShowCoords) {
             String message = LangStrings.ChestSpawned.replace("%x", Integer.toString(blockLoc.getBlockX())).replace("%y", Integer.toString(blockLoc.getBlockY())).replace("%z", Integer.toString(blockLoc.getBlockZ()));
@@ -191,6 +196,11 @@ public class DeathChestListener implements Listener {
                 return false;
             }
         }
+        Location nearChest = Helper.ChestNearLocation(loc);
+        if(nearChest != null) {
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantPlaceKillerChest);
+            return false;
+        }
         deathLoc.getWorld().getBlockAt(deathLoc).setType(Material.CHEST);
         final Location blockLoc = deathLoc.getWorld().getBlockAt(deathLoc).getLocation();
         Chest deathChest = (Chest) deathLoc.getWorld().getBlockAt(deathLoc).getState();
@@ -198,7 +208,6 @@ public class DeathChestListener implements Listener {
         for(ItemStack drop: drops) {
             inv.addItem(drop);
         }
-        drops.clear();
         chestInventory.put(deathChest, inv);
         int x = blockLoc.getBlockX();
         int y = blockLoc.getBlockY();
@@ -333,8 +342,12 @@ public class DeathChestListener implements Listener {
         if(e.getInventory().getType() == InventoryType.CHEST){
             InventoryHolder ih;
             Chest chest;
+
             try {
                 ih = e.getInventory().getHolder();
+                if(ih instanceof DoubleChest) {
+                    return;
+                }
                 chest = (Chest) ih;
             } catch(ClassCastException ccex) {
                 // Don't now why this exception sometimes occures.
@@ -456,6 +469,19 @@ public class DeathChestListener implements Listener {
             if(getKeyForDeathChest(e.getBlock().getLocation()) != null | getKeyForKillerChest(e.getBlock().getLocation()) != null) {
                 e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.DontBreak);
                 e.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockPlace(BlockPlaceEvent e) {
+        if(e.getBlockPlaced().getType() == Material.CHEST) {
+            Location loc = Helper.ChestNearLocation(e.getBlockPlaced().getLocation());
+            if(loc != null) {
+                if(getKeyForDeathChest(loc) != null || getKeyForHomeChest(loc) != null || getKeyForKillerChest(loc) != null) {
+                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.CantPlaceChestNearChest);
+                    e.setCancelled(true);
+                }
             }
         }
     }
