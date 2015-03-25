@@ -24,10 +24,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class DeathChestListener implements Listener {
 
@@ -45,7 +42,6 @@ public class DeathChestListener implements Listener {
         if(e.getDrops() == null ||e.getDrops().size() == 0) {
             return;
         }
-
         if(e.getEntity().getKiller() == null) {
             if(placeDeathChest((Player)e.getEntity(), e.getEntity().getLocation(), e.getDrops())) {
                 e.getDrops().clear();
@@ -66,16 +62,31 @@ public class DeathChestListener implements Listener {
         Location homeLoc = homeChestLoc(p);
         if(homeLoc != null) {
             Chest chest = (Chest)homeLoc.getWorld().getBlockAt(homeLoc).getState();
-            int empty = emptySlots(chest, true);
-            if(empty > drops.size()) {
-                Inventory homeInv = chestInventory.get(chest);
-                for(ItemStack drop: drops) {
+            Inventory homeInv = chestInventory.get(chest);
+            Iterator<ItemStack> iter = drops.iterator();
+            boolean placedAllItems = true;
+            while(iter.hasNext()) {
+                int empty = emptySlots(homeInv, true);
+                ItemStack drop = iter.next();
+                if(empty >= 1) {
                     homeInv.addItem(drop);
+                    iter.remove();
+                } else {
+                    placedAllItems = false;
+                    break;
                 }
+            }
+            if(placedAllItems) {
+                drops.clear();
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.StoredInHomeChest);
                 String base = Main.Serialization.toBase64(homeInv);
                 Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
                 return true;
+            } else {
+                String base = Main.Serialization.toBase64(homeInv);
+                Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
+                p.sendMessage(LangStrings.Prefix + " §cOnly one part was placed in your home chest.");
+                p.sendMessage(LangStrings.Prefix + " §cThe remaining part was placed in a death chest!");
             }
         }
         if(!Main.enabledWorlds.contains(w)) {
@@ -113,6 +124,7 @@ public class DeathChestListener implements Listener {
         for(ItemStack drop: drops) {
             inv.addItem(drop);
         }
+        drops.clear();
         chestInventory.put(deathChest, inv);
         if(Main.ShowCoords) {
             String message = LangStrings.ChestSpawned.replace("%x", Integer.toString(blockLoc.getBlockX())).replace("%y", Integer.toString(blockLoc.getBlockY())).replace("%z", Integer.toString(blockLoc.getBlockZ()));
@@ -125,11 +137,15 @@ public class DeathChestListener implements Listener {
         try {
             Object[] countArray = Main.plugin.getConfig().getConfigurationSection("death-chests." + p.getUniqueId()).getKeys(false).toArray();
             Object countObj = countArray[countArray.length-1];
-            if(countObj.toString() == "home-chest") {
+            if(countObj.toString().equals("home-chest")) {
                 countObj = countArray[countArray.length-2];
+                count = Integer.parseInt(countObj.toString());
+                count++;
+            } else {
+                count = Integer.parseInt(countObj.toString());
+                count++;
             }
-            count = Integer.parseInt(countObj.toString());
-            count++;
+
         } catch(NullPointerException npe) {
             count = 0;
         } catch(ArrayIndexOutOfBoundsException aioobe) {
@@ -208,6 +224,7 @@ public class DeathChestListener implements Listener {
         for(ItemStack drop: drops) {
             inv.addItem(drop);
         }
+        drops.clear();
         chestInventory.put(deathChest, inv);
         int x = blockLoc.getBlockX();
         int y = blockLoc.getBlockY();
@@ -549,7 +566,7 @@ public class DeathChestListener implements Listener {
         return -1;
     }
 
-    private ArrayList<Location> playersDeathChests(String sUuid) {
+    public ArrayList<Location> playersDeathChests(String sUuid) {
         ArrayList<Location> result = new ArrayList<Location>();
         try {
             for(String key: Main.plugin.getConfig().getConfigurationSection("death-chests." + sUuid).getKeys(false)) {
@@ -582,6 +599,46 @@ public class DeathChestListener implements Listener {
         }
 
         return result;
+    }
+
+    public static TreeMap<String, Location> playersChest(String sUuid) {
+        HashMap<String, Location> result = new HashMap<>();
+        TreeMap<String, Location> result2 = new TreeMap<>();
+        try {
+            for(String key: Main.plugin.getConfig().getConfigurationSection("death-chests." + sUuid).getKeys(false)) {
+                int x;
+                int y;
+                int z;
+                String w;
+                try {
+                    x = Main.plugin.getConfig().getInt("death-chests." + sUuid + "." + key + ".x");
+                    y = Main.plugin.getConfig().getInt("death-chests." + sUuid + "." + key + ".y");
+                    z = Main.plugin.getConfig().getInt("death-chests." + sUuid + "." + key + ".z");
+                    w = Main.plugin.getConfig().getString("death-chests." + sUuid + "." + key + ".world");
+                } catch(NullPointerException npe) {
+                    continue;
+                }
+
+                World world;
+                try {
+                    world = Bukkit.getWorld(w);
+                } catch(IllegalArgumentException iae) {
+                    continue;
+                }
+                Location tmp = new Location(world, x, y, z, 0.0F, 0.0F);
+                if(key.equals("home-chest")) {
+                    result.put("Home Chest", tmp);
+                } else {
+                    UUID uuid = UUID.fromString(sUuid);
+                    int deathChestCount = DeathChestListener.DeathChestCount(tmp, uuid);
+                    result.put(Integer.toString(deathChestCount), tmp);
+                }
+            }
+        } catch(NullPointerException npe) {
+            return null;
+        }
+        result2.putAll(result);
+        return result2;
     }
 
     public static Player getKeyForDeathChest(Location loc) {
@@ -647,14 +704,14 @@ public class DeathChestListener implements Listener {
         return null;
     }
 
-    private int emptySlots(Chest c, boolean doubleChest) {
+    private int emptySlots(Inventory inv, boolean doubleChest) {
         int slots;
         if(doubleChest) {
             slots = 54;
         } else {
             slots = 27;
         }
-        for(ItemStack is: c.getInventory().getContents()) {
+        for(ItemStack is: inv.getContents()) {
             if(is != null) {
                 slots--;
             }

@@ -18,6 +18,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -71,6 +72,8 @@ public class HomeChestListener implements Listener {
         }
     }
 
+    private ItemStack doubleClickedItem;
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
         if(e.getInventory().getType() == InventoryType.CHEST ) {
@@ -90,17 +93,20 @@ public class HomeChestListener implements Listener {
                 return;
             }
 
-            if (e.getRawSlot() == e.getSlot() && e.getInventory().getType() == InventoryType.CHEST) {
-                if(e.getCursor().getType()!=Material.AIR){
-                    e.setCancelled(true);
-                }
-            }
-            else {
+            if (e.getRawSlot() != e.getSlot() || e.getInventory().getType() != InventoryType.CHEST) {
+                // Player-Inventory
                 if(e.isShiftClick()) {
                     e.setCancelled(true);
                 }
                 if(e.getCurrentItem().getType()!=Material.AIR){
                     e.setCancelled(true);
+                }
+            } else {
+                if(e.getCursor().getType() != Material.AIR && doubleClickedItem != null &&e.getCursor() == doubleClickedItem) {
+                    e.setCancelled(true);
+                }
+                if(e.getCurrentItem() != null && e.getCurrentItem().getType() != Material.AIR) {
+                    doubleClickedItem = e.getCurrentItem();
                 }
             }
 
