@@ -131,7 +131,7 @@ public class DeathChestCommand implements CommandExecutor {
                     if(success) {
                         p.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveSuccessful.replace("%id", id));
                     } else {
-                        p.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveFailed);
+                        p.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveFailed.replace("%id", id));
                     }
 
                 } else {

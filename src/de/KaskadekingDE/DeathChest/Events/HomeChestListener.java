@@ -11,6 +11,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.ClickType;
@@ -30,16 +31,11 @@ public class HomeChestListener implements Listener {
 
     public static boolean loaded;
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PlayerJoinEvent e) {
         // worst hack ever :P
         if(!loaded) {
-            Main.saveDeathChestInventory();
-            Main.saveKillerChestInventory();
-            Main.saveHomeChestInventory();
-            Main.plugin.reloadConfig();
-            Main.playerData.reloadConfig();
-            Main.plugin.loadConfig();
+            Main.plugin.getServer().dispatchCommand(Main.plugin.getServer().getConsoleSender(), "dc reload");
             loaded = true;
         }
 
