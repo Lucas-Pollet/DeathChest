@@ -167,10 +167,10 @@ public class DeathChestCommand implements CommandExecutor {
     }
 
     private boolean checkAlreadyHome(Player p ) {
-        if(Main.plugin.getConfig().get("death-chests." + p.getUniqueId() + ".home-chest.x") != null) {
-            if(Main.plugin.getConfig().get("death-chests." + p.getUniqueId() + ".home-chest.y") != null) {
-                if(Main.plugin.getConfig().get("death-chests." + p.getUniqueId() + ".home-chest.z") != null) {
-                    if(Main.plugin.getConfig().get("death-chests." + p.getUniqueId() + ".home-chest.world") != null) {
+        if(Main.playerData.getPlayerConfig().get("death-chests." + p.getUniqueId() + ".home-chest.x") != null) {
+            if(Main.playerData.getPlayerConfig().get("death-chests." + p.getUniqueId() + ".home-chest.y") != null) {
+                if(Main.playerData.getPlayerConfig().get("death-chests." + p.getUniqueId() + ".home-chest.z") != null) {
+                    if(Main.playerData.getPlayerConfig().get("death-chests." + p.getUniqueId() + ".home-chest.world") != null) {
                         return true;
                     }
                 }
@@ -185,11 +185,11 @@ public class DeathChestCommand implements CommandExecutor {
             id = "home-chest";
         }
         try {
-            if(Main.plugin.getConfig().contains("death-chests." + p.getUniqueId()) && Main.plugin.getConfig().contains("death-chests." + p.getUniqueId() + "." + id)) {
-                int x = Main.plugin.getConfig().getInt("death-chests." + p.getUniqueId() + "." + id + ".x");
-                int y = Main.plugin.getConfig().getInt("death-chests." + p.getUniqueId()+ "." + id + ".y");
-                int z = Main.plugin.getConfig().getInt("death-chests." + p.getUniqueId()+ "." + id  + ".z");
-                String w = Main.plugin.getConfig().getString("death-chests." + p.getUniqueId() + "." + id + ".world");
+            if(Main.playerData.getPlayerConfig().contains("death-chests." + p.getUniqueId()) && Main.playerData.getPlayerConfig().contains("death-chests." + p.getUniqueId() + "." + id)) {
+                int x = Main.playerData.getPlayerConfig().getInt("death-chests." + p.getUniqueId() + "." + id + ".x");
+                int y = Main.playerData.getPlayerConfig().getInt("death-chests." + p.getUniqueId()+ "." + id + ".y");
+                int z = Main.playerData.getPlayerConfig().getInt("death-chests." + p.getUniqueId()+ "." + id  + ".z");
+                String w = Main.playerData.getPlayerConfig().getString("death-chests." + p.getUniqueId() + "." + id + ".world");
                 World world = Bukkit.getWorld(w);
                 if(world != null) {
                     Location loc = new Location(world, x, y, z);
@@ -205,8 +205,8 @@ public class DeathChestCommand implements CommandExecutor {
                     }
                     DeathChestListener.chestRemover.remove(loc);
                 }
-                Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + id, null);
-                Main.plugin.saveConfig();
+                Main.playerData.getPlayerConfig().set("death-chests." + p.getUniqueId() + "." + id, null);
+                Main.playerData.savePlayerConfig();
                 return true;
             } else {
                 return false;

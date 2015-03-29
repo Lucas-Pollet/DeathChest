@@ -43,7 +43,7 @@ deathchest.remove.other - Allows user to remove chests of other players
 - Timer to remove death chests after specific timespan will be cancelled on reload/stop.
 
 ### Current version
-1.7
+1.7.3
 ### Todo's
 
  - ~~Add permission node to bypass protection~~
