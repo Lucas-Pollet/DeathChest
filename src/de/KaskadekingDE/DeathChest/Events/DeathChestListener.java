@@ -2,7 +2,6 @@ package de.KaskadekingDE.DeathChest.Events;
 
 import de.KaskadekingDE.DeathChest.Config.LangStrings;
 import de.KaskadekingDE.DeathChest.Helper;
-import de.KaskadekingDE.DeathChest.ItemSerialization.v1_8_R1.ItemSerialization;
 import de.KaskadekingDE.DeathChest.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -80,13 +79,15 @@ public class DeathChestListener implements Listener {
                 drops.clear();
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.StoredInHomeChest);
                 String base = Main.Serialization.toBase64(homeInv);
-                Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
+                Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + "." + "last-known-name", p.getName());
+                Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
                 return true;
             } else {
                 String base = Main.Serialization.toBase64(homeInv);
-                Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
-                p.sendMessage(LangStrings.Prefix + " §cOnly one part was placed in your home chest.");
-                p.sendMessage(LangStrings.Prefix + " §cThe remaining part was placed in a death chest!");
+                Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + "." + "last-known-name", p.getName());
+                Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + ".home-chest.inventory", base);
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.HomeChestFullOne);
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.HomeChestFullSecond);
             }
         }
         if(!Main.enabledWorlds.contains(w)) {
@@ -135,8 +136,11 @@ public class DeathChestListener implements Listener {
         int z = blockLoc.getBlockZ();
         int count;
         try {
-            Object[] countArray = Main.plugin.getConfig().getConfigurationSection("death-chests." + p.getUniqueId()).getKeys(false).toArray();
+            Object[] countArray = Main.playerData.getConfig().getConfigurationSection("death-chests." + p.getUniqueId()).getKeys(false).toArray();
             Object countObj = countArray[countArray.length-1];
+            if(countObj.toString().equals("last-known-name")) {
+                countObj = countArray[countArray.length-2];
+            }
             if(countObj.toString().equals("home-chest")) {
                 countObj = countArray[countArray.length-2];
                 count = Integer.parseInt(countObj.toString());
@@ -158,12 +162,13 @@ public class DeathChestListener implements Listener {
         locations.add(blockLoc);
         deathChests.put(p, locations);
         String base = Main.Serialization.toBase64(inv);
-        Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".x", x);
-        Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".y", y);
-        Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".z", z);
-        Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".world", p.getWorld().getName());
-        Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".inventory", base);
-        Main.plugin.saveConfig();
+        Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + "." + "last-known-name", p.getName());
+        Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".x", x);
+        Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".y", y);
+        Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".z", z);
+        Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".world", p.getWorld().getName());
+        Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + "." + count + ".inventory", base);
+        Main.playerData.saveConfig();
         if(Main.RemoveChestAfterXSeconds) {
 
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.TimeStarted);
@@ -176,8 +181,8 @@ public class DeathChestListener implements Listener {
                         int dcc = DeathChestCount(blockLoc, p.getUniqueId());
                         deathChests.get(p).remove(blockLoc);
                         chestInventory.remove(blockLoc.getWorld().getBlockAt(blockLoc).getState());
-                        Main.plugin.getConfig().set("death-chests." + p.getUniqueId() + "." + dcc, null);
-                        Main.plugin.saveConfig();
+                        Main.playerData.getConfig().set("death-chests." + p.getUniqueId() + "." + dcc, null);
+                        Main.playerData.saveConfig();
                         chestRemover.remove(blockLoc);
                         p.sendMessage(LangStrings.Prefix + " " + LangStrings.TimeOver);
                     }
@@ -233,6 +238,9 @@ public class DeathChestListener implements Listener {
         try {
             Object[] countArray = Main.killerConfig.getKillerConfig().getConfigurationSection("death-chests." + killer.getUniqueId()).getKeys(false).toArray();
             Object countObj = countArray[countArray.length-1];
+            if(countObj.toString().equals("last-known-name")) {
+                countObj = countArray[countArray.length-2];
+            }
             count = Integer.parseInt(countObj.toString());
             count++;
         } catch(NullPointerException npe) {
@@ -251,6 +259,7 @@ public class DeathChestListener implements Listener {
         tmp.add(blockLoc);
         killerChests.put(killer, tmp);
         String base = Main.Serialization.toBase64(inv);
+        Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + "last-known-name", killer.getName());
         Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".x", x);
         Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".y", y);
         Main.killerConfig.getKillerConfig().set("death-chests." + killer.getUniqueId() + "." + count + ".z", z);
@@ -317,15 +326,18 @@ public class DeathChestListener implements Listener {
             return;
         }
         Player ownerHome = getKeyForHomeChest(loc);
-        Location homeLoc = homeChestLoc(p);
         if(ownerHome != null) {
+            Location homeLoc = homeChestLoc(ownerHome);
             if(!ownerHome.equals(p) && !p.hasPermission("deathchest.protection.bypass")) {
-                p.sendMessage(LangStrings.Prefix + " " + LangStrings.NotOwner);
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.NotOwner.replace("%owner", ownerHome.getDisplayName()));
                 e.setCancelled(true);
                 return;
             }
             if(homeLoc == null) return;
             Chest chest = (Chest)homeLoc.getWorld().getBlockAt(homeLoc).getState();
+            if(!ownerHome.equals(p)) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.BelongsTo.replace("%owner", ownerHome.getDisplayName()));
+            }
             Inventory inv = chestInventory.get(chest);
             suppressInventoryOpenEvent.put(p, inv);
             p.openInventory(inv);
@@ -334,8 +346,11 @@ public class DeathChestListener implements Listener {
         Player owner = getKeyForDeathChest(loc);
         if(owner != null) {
             if(Main.ProtectedChest && !p.equals(owner) && !p.hasPermission("deathchest.protection.bypass")) {
-                p.sendMessage(LangStrings.Prefix + " " + LangStrings.NotOwner);
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.NotOwner.replace("%owner", ownerHome.getDisplayName()));
             } else {
+                if(!owner.equals(p)) {
+                    p.sendMessage(LangStrings.Prefix + " " + LangStrings.BelongsTo.replace("%owner", ownerHome.getDisplayName()));
+                }
                 Inventory inv = chestInventory.get(loc.getWorld().getBlockAt(loc).getState());
                 suppressInventoryOpenEvent.put(p, inv);
                 p.openInventory(inv);
@@ -427,8 +442,9 @@ public class DeathChestListener implements Listener {
                     int dcc = DeathChestCount(loc, p.getUniqueId());
                     deathChests.get(owner).remove(loc);
                     chestInventory.remove(loc.getWorld().getBlockAt(loc).getState());
-                    Main.plugin.getConfig().set("death-chests." + owner.getUniqueId() + "." + dcc, null);
-                    Main.plugin.saveConfig();
+                    Main.playerData.getConfig().set("death-chests." + owner.getUniqueId() + "." + "last-known-name", owner.getName());
+                    Main.playerData.getConfig().set("death-chests." + owner.getUniqueId() + "." + dcc, null);
+                    Main.playerData.saveConfig();
                     p.sendMessage(LangStrings.Prefix + " " + LangStrings.ChestRemoved);
                     break;
                 } else {
@@ -453,6 +469,8 @@ public class DeathChestListener implements Listener {
             killerChests.remove(loc);
             chestInventory.remove(loc.getWorld().getBlockAt(loc).getState());
             int count = KillerChestCount(loc, owner.getUniqueId());
+
+            Main.plugin.killerConfig.getKillerConfig().set("death-chests." + owner.getUniqueId() + "." + "last-known-name", owner.getName());
             Main.plugin.killerConfig.getKillerConfig().set("death-chests." + owner.getUniqueId() + "." + count, null);
             Main.plugin.killerConfig.saveKillerConfig();
         }
@@ -480,8 +498,9 @@ public class DeathChestListener implements Listener {
                 e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.Removed);
                 chestInventory.remove(chest);
                 homeChest.remove(e.getPlayer());
-                Main.plugin.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest", null);
-                Main.plugin.saveConfig();
+                Main.playerData.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + "." + "last-known-name", e.getPlayer().getName());
+                Main.playerData.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest", null);
+                Main.playerData.saveConfig();
             }
             if(getKeyForDeathChest(e.getBlock().getLocation()) != null | getKeyForKillerChest(e.getBlock().getLocation()) != null) {
                 e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.DontBreak);
@@ -505,12 +524,12 @@ public class DeathChestListener implements Listener {
 
     public static int DeathChestCount(Location loc, UUID uuid) {
         try {
-            for(String key: Main.plugin.getConfig().getConfigurationSection("death-chests." + uuid).getKeys(false)) {
+            for(String key: Main.playerData.getConfig().getConfigurationSection("death-chests." + uuid).getKeys(false)) {
                 try {
-                    int x = Main.plugin.getConfig().getInt("death-chests." + uuid + "." + key + ".x");
-                    int y = Main.plugin.getConfig().getInt("death-chests." + uuid + "." + key + ".y");
-                    int z = Main.plugin.getConfig().getInt("death-chests." + uuid + "." + key + ".z");
-                    String w = Main.plugin.getConfig().getString("death-chests." + uuid + "." + key + ".world");
+                    int x = Main.playerData.getConfig().getInt("death-chests." + uuid + "." + key + ".x");
+                    int y = Main.playerData.getConfig().getInt("death-chests." + uuid + "." + key + ".y");
+                    int z = Main.playerData.getConfig().getInt("death-chests." + uuid + "." + key + ".z");
+                    String w = Main.playerData.getConfig().getString("death-chests." + uuid + "." + key + ".world");
                     World world = Bukkit.getWorld(w);
                     Location loc2 = new Location(world, x, y, z, 0.0F, 0.0F);
                     int result;
@@ -569,17 +588,18 @@ public class DeathChestListener implements Listener {
     public ArrayList<Location> playersDeathChests(String sUuid) {
         ArrayList<Location> result = new ArrayList<Location>();
         try {
-            for(String key: Main.plugin.getConfig().getConfigurationSection("death-chests." + sUuid).getKeys(false)) {
+            for(String key: Main.playerData.getConfig().getConfigurationSection("death-chests." + sUuid).getKeys(false)) {
                 if(key.equals("home-chest")) continue;
+                if(key.equals("last-known-name")) continue;
                 int x;
                 int y;
                 int z;
                 String w;
                 try {
-                    x = Main.plugin.getConfig().getInt("death-chests." + sUuid + "." + key + ".x");
-                    y = Main.plugin.getConfig().getInt("death-chests." + sUuid + "." + key + ".y");
-                    z = Main.plugin.getConfig().getInt("death-chests." + sUuid + "." + key + ".z");
-                    w = Main.plugin.getConfig().getString("death-chests." + sUuid + "." + key + ".world");
+                    x = Main.playerData.getConfig().getInt("death-chests." + sUuid + "." + key + ".x");
+                    y = Main.playerData.getConfig().getInt("death-chests." + sUuid + "." + key + ".y");
+                    z = Main.playerData.getConfig().getInt("death-chests." + sUuid + "." + key + ".z");
+                    w = Main.playerData.getConfig().getString("death-chests." + sUuid + "." + key + ".world");
                 } catch(NullPointerException npe) {
                     continue;
                 }
@@ -605,16 +625,17 @@ public class DeathChestListener implements Listener {
         HashMap<String, Location> result = new HashMap<>();
         TreeMap<String, Location> result2 = new TreeMap<>();
         try {
-            for(String key: Main.plugin.getConfig().getConfigurationSection("death-chests." + sUuid).getKeys(false)) {
+            for(String key: Main.playerData.getConfig().getConfigurationSection("death-chests." + sUuid).getKeys(false)) {
+                if(key.equals("last-known-name")) continue;
                 int x;
                 int y;
                 int z;
                 String w;
                 try {
-                    x = Main.plugin.getConfig().getInt("death-chests." + sUuid + "." + key + ".x");
-                    y = Main.plugin.getConfig().getInt("death-chests." + sUuid + "." + key + ".y");
-                    z = Main.plugin.getConfig().getInt("death-chests." + sUuid + "." + key + ".z");
-                    w = Main.plugin.getConfig().getString("death-chests." + sUuid + "." + key + ".world");
+                    x = Main.playerData.getConfig().getInt("death-chests." + sUuid + "." + key + ".x");
+                    y = Main.playerData.getConfig().getInt("death-chests." + sUuid + "." + key + ".y");
+                    z = Main.playerData.getConfig().getInt("death-chests." + sUuid + "." + key + ".z");
+                    w = Main.playerData.getConfig().getString("death-chests." + sUuid + "." + key + ".world");
                 } catch(NullPointerException npe) {
                     continue;
                 }
@@ -667,7 +688,6 @@ public class DeathChestListener implements Listener {
         }
         return  null;
     }
-
 
     public static boolean checkForDeathChest(Player p, Location loc) {
         if(deathChests.containsKey(p)) {

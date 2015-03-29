@@ -17,6 +17,7 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -26,6 +27,23 @@ import java.util.Set;
 public class HomeChestListener implements Listener {
 
     public static Set<Player> readyPlayers = new HashSet<Player>();
+
+    public static boolean loaded;
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent e) {
+        // worst hack ever :P
+        if(!loaded) {
+            Main.saveDeathChestInventory();
+            Main.saveKillerChestInventory();
+            Main.saveHomeChestInventory();
+            Main.plugin.reloadConfig();
+            Main.playerData.reloadConfig();
+            Main.plugin.loadConfig();
+            loaded = true;
+        }
+
+    }
 
     @EventHandler
     public void onBlockAction(PlayerInteractEvent e) {
@@ -49,11 +67,12 @@ public class HomeChestListener implements Listener {
                     int y = b.getY();
                     int z = b.getZ();
                     World w = b.getWorld();
-                    Main.plugin.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest.x", x);
-                    Main.plugin.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest.y", y);
-                    Main.plugin.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest.z", z);
-                    Main.plugin.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest.world", w.getName());
-                    Main.plugin.saveConfig();
+                    Main.playerData.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + "." + "last-known-name", e.getPlayer().getName());
+                    Main.playerData.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest.x", x);
+                    Main.playerData.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest.y", y);
+                    Main.playerData.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest.z", z);
+                    Main.playerData.getConfig().set("death-chests." + e.getPlayer().getUniqueId() + ".home-chest.world", w.getName());
+                    Main.playerData.saveConfig();
 
                     Inventory inv = Bukkit.createInventory(ch.getInventory().getHolder(), 54, "Home Chest");
                     DeathChestListener.chestInventory.put(ch, inv);

@@ -28,6 +28,14 @@ deathchest.kill.place - If player kills another player a chest will be spawned w
 deathchest.protection.bypass - Allows user to bypass death chest protection
 
 deathchest.home - Allows user to set their home chest with /dc home
+
+deathchest.locations - Allows user to see his chest locations
+
+deathchest.locations.other - Allows user to see the chest locations of other players
+
+deathchest.remove - Allows user to remove one of his chests
+
+deathchest.remove.other - Allows user to remove chests of other players
 ```
 
 ### Known Issues:
@@ -35,7 +43,7 @@ deathchest.home - Allows user to set their home chest with /dc home
 - Timer to remove death chests after specific timespan will be cancelled on reload/stop.
 
 ### Current version
-1.5.2
+1.7
 ### Todo's
 
  - ~~Add permission node to bypass protection~~
@@ -49,4 +57,4 @@ deathchest.home - Allows user to set their home chest with /dc home
 
 License
 ----
-See LICENSE
+MIT

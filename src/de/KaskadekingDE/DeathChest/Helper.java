@@ -9,6 +9,10 @@ import org.bukkit.inventory.InventoryHolder;
 
 public class Helper {
 
+    public Helper() {
+        throw new UnsupportedOperationException("You're not allowed to create a new instance of Helper!");
+    }
+
     public static Location ChestNearLocation(Location loc) {
         Location locEast = new Location(loc.getWorld(), loc.getX() + 1, loc.getY(), loc.getZ());
         Location locSouth = new Location(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ() + 1);
@@ -35,5 +39,13 @@ public class Helper {
             }
         }
         return false;
+    }
+
+    public static boolean IsNumeric(String str) {
+        for (char c : str.toCharArray())
+        {
+            if (!Character.isDigit(c)) return false;
+        }
+        return true;
     }
 }
