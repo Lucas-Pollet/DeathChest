@@ -1,7 +1,7 @@
 name: DeathChest
 description: Creates a chest with all drops when you die.
 author: KaskadekingDE
-version: 1.7
+version: 1.7.1
 depend: [ProtocolLib]
 main: de.KaskadekingDE.DeathChest.Main
 

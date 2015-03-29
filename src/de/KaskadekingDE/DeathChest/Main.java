@@ -423,7 +423,12 @@ public class Main extends JavaPlugin {
                     continue;
                 } else {
                     if (loc.getWorld().getBlockAt(loc).getState() == null) continue;
-                    Chest chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
+                    Chest chest;
+                    try {
+                        chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
+                    } catch(ClassCastException ccex) {
+                        continue;
+                    }
                     Inventory inv = DeathChestListener.chestInventory.get(chest);
                     String base = Serialization.toBase64(inv);
                     playerData.reloadConfig();
@@ -455,7 +460,13 @@ public class Main extends JavaPlugin {
                     }
 
                     if(dcc == -1) continue;
-                    Chest chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
+                    Chest chest;
+                    try {
+                        chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
+                    } catch(ClassCastException ccex) {
+                        continue;
+                    }
+
                     Inventory inv = DeathChestListener.chestInventory.get(chest);
                     String base = Serialization.toBase64(inv);
                     playerData.getConfig().set("death-chests." + p.getUniqueId() + "." + dcc + ".inventory", base);
@@ -476,7 +487,12 @@ public class Main extends JavaPlugin {
                     continue;
                 } else {
                     int dcc = DeathChestListener.KillerChestCount(loc, p.getUniqueId());
-                    Chest chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
+                    Chest chest;
+                    try {
+                        chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
+                    } catch(ClassCastException ccex) {
+                        continue;
+                    }
                     Inventory inv = DeathChestListener.chestInventory.get(chest);
                     String base = Serialization.toBase64(inv);
 

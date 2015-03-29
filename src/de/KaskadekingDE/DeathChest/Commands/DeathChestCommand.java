@@ -88,7 +88,7 @@ public class DeathChestCommand implements CommandExecutor {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestOfOther.replace("%p", args[1]));
                 for(String key: chests.keySet()) {
                     Location value = chests.get(key);
-                    cs.sendMessage(LangStrings.Prefix + " §e" + key + ": §a X: " + value.getX() + " Y: " + value.getY() + " Z: " + value.getZ());
+                    cs.sendMessage(LangStrings.Prefix + " §e" + key + ": §a World: " + value.getWorld().getName() + " X: " + value.getX() + " Y: " + value.getY() + " Z: " + value.getZ());
                 }
             } else if(args.length == 1) {
                 if(!(cs instanceof Player)) {
@@ -108,7 +108,7 @@ public class DeathChestCommand implements CommandExecutor {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestOf);
                 for(String key: chests.keySet()) {
                     Location value = chests.get(key);
-                    p.sendMessage(LangStrings.Prefix + " §e" + key + ": §a X: " + value.getX() + " Y: " + value.getY() + " Z: " + value.getZ());
+                    p.sendMessage(LangStrings.Prefix + " §e" + key + ": §a World: " + value.getWorld().getName() + " X: " + value.getX() + " Y: " + value.getY() + " Z: " + value.getZ());
                 }
             } else {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidArgument);
