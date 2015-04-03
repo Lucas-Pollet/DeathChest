@@ -11,51 +11,51 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class LanguageConfig {
-    private FileConfiguration langConfig = null;
-    private File langConfigFile = null;
+    private FileConfiguration LanguageConfig = null;
+    private File LanguageConfigFile = null;
     private JavaPlugin plugin;
 
     public LanguageConfig(JavaPlugin plugin) {
         if(plugin == null)
             throw new IllegalArgumentException("Plugin instance cannot be null.");
         this.plugin = plugin;
-        langConfigFile = new File(plugin.getDataFolder(), "language.yml");
+        LanguageConfigFile = new File(plugin.getDataFolder(), "language.yml");
 
     }
 
-    public void reloadLangConfig() {
-        langConfig = YamlConfiguration.loadConfiguration(langConfigFile);
+    public void reloadLanguageConfig() {
+        LanguageConfig = YamlConfiguration.loadConfiguration(LanguageConfigFile);
         InputStream configStream = Main.plugin.getResource("language.yml");
         if(configStream != null) {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(new InputStreamReader(configStream));
-            langConfig.setDefaults(config);
+            LanguageConfig.setDefaults(config);
         }
     }
 
-    public FileConfiguration getLangConfig() {
-        if(langConfig == null) {
-            reloadLangConfig();
+    public FileConfiguration getLanguageConfig() {
+        if(LanguageConfig == null) {
+            reloadLanguageConfig();
         }
-        return langConfig;
+        return LanguageConfig;
     }
 
-    public void saveLangConfig() {
-        if(langConfig == null || langConfigFile == null) {
+    public void saveLanguageConfig() {
+        if(LanguageConfig == null || LanguageConfigFile == null) {
             return;
         }
         try {
-            getLangConfig().save(langConfigFile);
+            getLanguageConfig().save(LanguageConfigFile);
         } catch (IOException ex) {
             Main.plugin.getLogger().severe("Failed to save language config!");
             ex.printStackTrace();
         }
     }
 
-    public void saveDefaultLangConfig() {
-        if(langConfigFile == null) {
-            langConfigFile = new File(Main.plugin.getDataFolder(), "language.yml");
+    public void saveDefaultLanguageConfig() {
+        if(LanguageConfigFile == null) {
+            LanguageConfigFile = new File(plugin.getDataFolder(), "language.yml");
         }
-        if(!langConfigFile.exists()) {
+        if(!LanguageConfigFile.exists()) {
             Main.plugin.saveResource("language.yml", false);
         }
     }

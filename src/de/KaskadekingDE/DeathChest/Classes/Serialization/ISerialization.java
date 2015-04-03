@@ -1,4 +1,4 @@
-package de.KaskadekingDE.DeathChest.ItemSerialization;
+package de.KaskadekingDE.DeathChest.Classes.Serialization;
 
 import org.bukkit.inventory.Inventory;
 
@@ -8,5 +8,5 @@ public interface ISerialization {
     public String getVersion();
 
     public String toBase64(Inventory inv);
-    public Inventory fromBase64(String string) throws EOFException;
+    public Inventory fromBase64(String string);
 }

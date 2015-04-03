@@ -1,218 +1,355 @@
 package de.KaskadekingDE.DeathChest.Commands;
 
-import de.KaskadekingDE.DeathChest.Config.LangStrings;
-import de.KaskadekingDE.DeathChest.Events.DeathChestListener;
-import de.KaskadekingDE.DeathChest.Events.HomeChestListener;
-import de.KaskadekingDE.DeathChest.Helper;
+import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
+import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
+import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
+import de.KaskadekingDE.DeathChest.Classes.Helper;
+import de.KaskadekingDE.DeathChest.Events.HomeChestEvent;
+import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import de.KaskadekingDE.DeathChest.Main;
 import org.bukkit.*;
-import org.bukkit.block.Chest;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.Collections;
+import java.util.List;
 
 public class DeathChestCommand implements CommandExecutor {
+
     @Override
     public boolean onCommand(CommandSender cs, Command cmd, String label, String[] args) {
         if(args.length == 0) {
-            cs.sendMessage(LangStrings.Prefix + " §aPlugin made by KaskadekingDE.");
-            cs.sendMessage(LangStrings.HelpNotice);
+            cs.sendMessage("§6[§cDeathChest§6] §aDeathChest v" + Main.plugin.getDescription().getVersion() + " by KaskadekingDE");
+            cs.sendMessage(LangStrings.SeeHelp);
             return true;
         }
         if(args[0].equalsIgnoreCase("help")) {
             if(!cs.hasPermission("deathchest.help")) {
-                cs.sendMessage(LangStrings.Prefix + LangStrings.NoPermissions);
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                 return true;
             }
-            cs.sendMessage(LangStrings.Prefix + " " + LangStrings.HelpPage + " (1/1):");
-            cs.sendMessage("§9/dc reload §7- " + LangStrings.HelpReload);
-            cs.sendMessage("§9/dc help   §7- " + LangStrings.HelpHelp);
-            cs.sendMessage("§9/dc home   §7- " + LangStrings.HelpHome);
-            cs.sendMessage("§9/dc locations [player] §7- " + LangStrings.HelpLocations);
-            cs.sendMessage("§9/dc remove <id> [player] §7- " + LangStrings.HelpRemove);
+            cs.sendMessage(LangStrings.Prefix + " " + LangStrings.HelpTitle);
+            cs.sendMessage("§e/dchest help §7- §aShow the help page");
+            cs.sendMessage("§e/dchest reload §7- §aReloads the plugin config");
+            cs.sendMessage("§e/dchest home §7- §aSet your home chest");
+            cs.sendMessage("§e/dchest locations [player] §7- §aShow all locations of your death chest or from another player");
+            cs.sendMessage("§e/dchest remove <id> [death/kill/home] [player] §7- §aRemoves a death chest from the config & memory.");
             return true;
         } else if(args[0].equalsIgnoreCase("reload")) {
             if(!cs.hasPermission("deathchest.reload")) {
-                cs.sendMessage(LangStrings.Prefix + LangStrings.NoPermissions);
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                 return true;
             }
-            System.out.println("[DeathChest] Saving chest inventorys... This can take a while!");
-            Main.saveDeathChestInventory();
-            Main.saveKillerChestInventory();
-            Main.saveHomeChestInventory();
-            Main.playerData.saveConfig();
+            Main.languageConfig.reloadLanguageConfig();
             Main.plugin.reloadConfig();
-            Main.plugin.loadConfig();
-            Main.playerData.reloadConfig();
+            Main.playerData.reloadPlayerConfig();
+            Main.plugin.SaveConfig();
+            Main.plugin.LoadConfig();
             cs.sendMessage(LangStrings.Prefix + " " + LangStrings.ConfigReloaded);
             return true;
         } else if(args[0].equalsIgnoreCase("home")) {
             if(!(cs instanceof Player)) {
-                cs.sendMessage(LangStrings.OnlyPlayers);
-                return true;
-            }
-            if(Main.UsePermission && !cs.hasPermission("deathchest.home")) {
-                cs.sendMessage(LangStrings.Prefix + LangStrings.NoPermissions);
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.OnlyPlayers);
                 return true;
             }
             Player p = (Player) cs;
-            if(checkAlreadyHome(p)) {
-                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.AlreadySet);
+            if(!p.hasPermission("deathchest.place.home")) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                 return true;
             }
-            World w = p.getWorld();
-            if(!Main.enabledWorlds.contains(w) && !Main.ExecludeHomeChestFromWhitelist) {
-                p.sendMessage(LangStrings.Prefix + " " + LangStrings.NotEnabled);
+            HomeChest hc = HomeChest.HomeChestByPlayer(p);
+            if(hc != null) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.AlreadyAHomeChest);
                 return true;
             }
-            cs.sendMessage(LangStrings.Prefix + " " + LangStrings.SetupHome);
-
-            HomeChestListener.readyPlayers.add(p);
+            HomeChestEvent.setHome.add(p);
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.SetupHomeChest);
             return true;
         } else if(args[0].equalsIgnoreCase("locations")) {
-            if(args.length == 2) {
-                if(Main.UsePermission && !cs.hasPermission("deathchest.locations.others")) {
-                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
-                    return true;
-                }
-                OfflinePlayer p = Bukkit.getOfflinePlayer(args[1]);
-                TreeMap<String, Location> chests = DeathChestListener.playersChest(p.getUniqueId().toString());
-                if(chests == null || chests.size() == 0) {
-                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoDeathChestOther.replace("%p", args[1]));
-                    return true;
-                }
-                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestOfOther.replace("%p", args[1]));
-                for(String key: chests.keySet()) {
-                    Location value = chests.get(key);
-                    cs.sendMessage(LangStrings.Prefix + " §e" + key + ": §a World: " + value.getWorld().getName() + " X: " + value.getX() + " Y: " + value.getY() + " Z: " + value.getZ());
-                }
-            } else if(args.length == 1) {
+            if(args.length == 1) {
                 if(!(cs instanceof Player)) {
-                    cs.sendMessage(LangStrings.OnlyPlayers);
+                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.OnlyPlayers);
                     return true;
-                }
-                if(Main.UsePermission && !cs.hasPermission("deathchest.locations")) {
-                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
-                    return true;
-                }
-                Player p = (Player) cs;
-                TreeMap<String, Location> chests = DeathChestListener.playersChest(p.getUniqueId().toString());
-                if(chests == null || chests.size() == 0) {
-                    p.sendMessage(LangStrings.Prefix + " " + LangStrings.NoDeathChest);
-                    return true;
-                }
-                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestOf);
-                for(String key: chests.keySet()) {
-                    Location value = chests.get(key);
-                    p.sendMessage(LangStrings.Prefix + " §e" + key + ": §a World: " + value.getWorld().getName() + " X: " + value.getX() + " Y: " + value.getY() + " Z: " + value.getZ());
-                }
-            } else {
-                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidArgument);
-            }
-        } else if(args[0].equalsIgnoreCase("remove")) {
-            if(args.length == 2) {
-                if(!(cs instanceof Player)) {
+                } else if(!cs.hasPermission("deathchest.locations")) {
                     cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                     return true;
                 }
                 Player p = (Player)cs;
-                if(!p.hasPermission("deathchest.remove")) {
-                    p.sendMessage(LangStrings.Prefix + " "+ LangStrings.NoPermissions);
+                List<DeathChest> deathChestList = DeathChest.DeathChestsByOwner(p);
+                List<KillChest> killChestList = KillChest.KillChestsByOwner(p);
+                Collections.sort(killChestList);
+                Collections.sort(deathChestList);
+                HomeChest hc = HomeChest.HomeChestByPlayer(p);
+                if(hc == null && deathChestList.size() == 0 && killChestList.size() == 0) {
+                    p.sendMessage(LangStrings.Prefix + " " + LangStrings.NoDeathChest);
                     return true;
                 }
-                String id = args[1];
-                if(id.equalsIgnoreCase("home") || Helper.IsNumeric(id)) {
-                    p.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveWarning);
-                    boolean success = RemoveChest(id, p);
-                    if(success) {
-                        p.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveSuccessful.replace("%id", id));
-                    } else {
-                        p.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveFailed.replace("%id", id));
+                if(deathChestList.size() != 0 || hc != null) {
+                    p.sendMessage(LangStrings.Prefix + " " + LangStrings.YourDeathChests);
+                    if(hc != null) {
+                        int x = hc.ChestLocation.getBlockX();
+                        int y = hc.ChestLocation.getBlockY();
+                        int z = hc.ChestLocation.getBlockZ();
+                        World w = hc.ChestLocation.getWorld();
+                        p.sendMessage("§e'Home' §7: §aX: " + x + " Y: " + y + " Z: " + z + " World: " + w.getName());
                     }
-
-                } else {
-                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidId);
-                    return true;
                 }
-
-
-            } else if (args.length == 3) {
-                if(!cs.hasPermission("deathchest.remove.others")) {
+                for(DeathChest dc: deathChestList) {
+                    String id = Integer.toString(dc.GetId());
+                    int x = dc.ChestLocation.getBlockX();
+                    int y = dc.ChestLocation.getBlockY();
+                    int z = dc.ChestLocation.getBlockZ();
+                    World w = dc.ChestLocation.getWorld();
+                    p.sendMessage("§6'" + id + "' §7: §aX: " + x + " Y: " + y + " Z: " + z + " World: " + w.getName());
+                }
+                if(killChestList.size() != 0) {
+                    p.sendMessage(LangStrings.Prefix + " " + LangStrings.YourKillChests);
+                    for(KillChest kc: killChestList) {
+                        String id = Integer.toString(kc.GetId());
+                        int x = kc.ChestLocation.getBlockX();
+                        int y = kc.ChestLocation.getBlockY();
+                        int z = kc.ChestLocation.getBlockZ();
+                        World w = kc.ChestLocation.getWorld();
+                        p.sendMessage("§6'" + id + "' §7: §aX: " + x + " Y: " + y + " Z: " + z + " World: " + w.getName());
+                    }
+                }
+            } else if(args.length == 2) {
+                if(!cs.hasPermission("deathchest.locations.others")) {
                     cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                     return true;
                 }
-
-                String id = args[1];
-                if(!id.equalsIgnoreCase("home") || !Helper.IsNumeric(id)) {
-                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidArgument);
+                String playerName = args[1];
+                Player sender = (Player) cs;
+                OfflinePlayer p = Bukkit.getOfflinePlayer(playerName);
+                List<DeathChest> deathChestList = DeathChest.DeathChestsByOwner(p);
+                List<KillChest> killChestList = KillChest.KillChestsByOwner(p);
+                Collections.sort(killChestList);
+                Collections.sort(deathChestList);
+                HomeChest hc = HomeChest.HomeChestByPlayer(p);
+                if(hc == null && deathChestList.size() == 0 && killChestList.size() == 0) {
+                    sender.sendMessage(LangStrings.Prefix + " " + LangStrings.PlayerNoDeathChest.replace("%player", playerName));
                     return true;
                 }
-                cs.sendMessage(LangStrings.Prefix + " "+ LangStrings.RemoveWarning);
-                Player target = Bukkit.getOfflinePlayer(args[2]).getPlayer();
-                boolean success = RemoveChest(id, target);
-                if(success) {
-                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveSuccessful.replace("%id", id));
-                } else {
-                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveFailed);
+                sender.sendMessage(LangStrings.Prefix + " " + LangStrings.PlayerDeathChests.replace("%player", playerName));
+                if(hc != null) {
+                    int x = hc.ChestLocation.getBlockX();
+                    int y = hc.ChestLocation.getBlockY();
+                    int z = hc.ChestLocation.getBlockZ();
+                    World w = hc.ChestLocation.getWorld();
+                    sender.sendMessage("§e'Home' §7: §aX: " + x + " Y: " + y + " Z: " + z + " World: " + w.getName());
+                }
+                for(DeathChest dc: deathChestList) {
+                    String id = Integer.toString(dc.GetId());
+                    int x = dc.ChestLocation.getBlockX();
+                    int y = dc.ChestLocation.getBlockY();
+                    int z = dc.ChestLocation.getBlockZ();
+                    World w = dc.ChestLocation.getWorld();
+                    sender.sendMessage("§e'" + id + "' §7: §aX: " + x + " Y: " + y + " Z: " + z + " World: " + w.getName());
+                }
+                if(killChestList.size() != 0) {
+                    sender.sendMessage(LangStrings.Prefix + " " + LangStrings.PlayerKillerChests.replace("%player", playerName));
+                    for(KillChest kc: killChestList) {
+                        String id = Integer.toString(kc.GetId());
+                        int x = kc.ChestLocation.getBlockX();
+                        int y = kc.ChestLocation.getBlockY();
+                        int z = kc.ChestLocation.getBlockZ();
+                        World w = kc.ChestLocation.getWorld();
+                        sender.sendMessage("§6'" + id + "' §7: §aX: " + x + " Y: " + y + " Z: " + z + " World: " + w.getName());
+                    }
                 }
             } else {
-                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidArgument);
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.TooManyOrTooFewArguments);
+                return true;
             }
+        } else if(args[0].equalsIgnoreCase("remove")) {
+            return RemoveCommand(cs, cmd, label, args);
         }
         return true;
     }
 
-    private boolean checkAlreadyHome(Player p ) {
-        if(Main.playerData.getPlayerConfig().get("death-chests." + p.getUniqueId() + ".home-chest.x") != null) {
-            if(Main.playerData.getPlayerConfig().get("death-chests." + p.getUniqueId() + ".home-chest.y") != null) {
-                if(Main.playerData.getPlayerConfig().get("death-chests." + p.getUniqueId() + ".home-chest.z") != null) {
-                    if(Main.playerData.getPlayerConfig().get("death-chests." + p.getUniqueId() + ".home-chest.world") != null) {
-                        return true;
-                    }
-                }
-
-            }
-        }
-        return false;
-    }
-
-    private boolean RemoveChest(String id, Player p) {
-        if(id.equalsIgnoreCase("home")) {
-            id = "home-chest";
-        }
-        try {
-            if(Main.playerData.getPlayerConfig().contains("death-chests." + p.getUniqueId()) && Main.playerData.getPlayerConfig().contains("death-chests." + p.getUniqueId() + "." + id)) {
-                int x = Main.playerData.getPlayerConfig().getInt("death-chests." + p.getUniqueId() + "." + id + ".x");
-                int y = Main.playerData.getPlayerConfig().getInt("death-chests." + p.getUniqueId()+ "." + id + ".y");
-                int z = Main.playerData.getPlayerConfig().getInt("death-chests." + p.getUniqueId()+ "." + id  + ".z");
-                String w = Main.playerData.getPlayerConfig().getString("death-chests." + p.getUniqueId() + "." + id + ".world");
-                World world = Bukkit.getWorld(w);
-                if(world != null) {
-                    Location loc = new Location(world, x, y, z);
-                    if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST) {
-                        Chest chest = (Chest) loc.getWorld().getBlockAt(loc).getState();
-                        DeathChestListener.chestInventory.remove(chest);
-                        loc.getWorld().getBlockAt(loc).setType(Material.AIR);
-                    }
-                    if(id.equals("home-chest")) {
-                        DeathChestListener.homeChest.remove(p);
-                    } else {
-                        DeathChestListener.deathChests.get(p).remove(loc);
-                    }
-                    DeathChestListener.chestRemover.remove(loc);
-                }
-                Main.playerData.getPlayerConfig().set("death-chests." + p.getUniqueId() + "." + id, null);
-                Main.playerData.savePlayerConfig();
+    public boolean RemoveCommand(CommandSender cs, Command cmd, String label, String[] args) {
+        if(args.length == 2) {
+            if(!args[1].equalsIgnoreCase("home")) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidId + " " + LangStrings.RemoveHomeChestWarning);
                 return true;
-            } else {
-                return false;
             }
-        } catch(NullPointerException npe) {
-            return false;
+            if(!(cs instanceof Player)) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.OnlyPlayers);
+                return true;
+            } else if(!cs.hasPermission("deathchest.remove")) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
+                return true;
+            }
+            Player p = (Player) cs;
+            HomeChest hc = HomeChest.HomeChestByPlayer(p);
+            if(hc == null) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.NoHomeChest);
+                return true;
+            }
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveWarning);
+            p.closeInventory();
+            for (ItemStack i : hc.HomeInventory.getContents())
+            {
+                if(i != null) {
+                    p.getWorld().dropItemNaturally(p.getLocation(), i);
+                }
+            }
+            Location loc = hc.ChestLocation;
+            hc.RemoveChest();
+            if(loc.getBlock().getType() == Material.CHEST) {
+                loc.getBlock().setType(Material.AIR);
+            }
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.HomeChestRemoved);
+        } else if(args.length == 3) {
+            String type = args[2];
+            String id = args[1];
+            if(type.equalsIgnoreCase("home")) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidType + " " + LangStrings.RemoveHomeChestWarning);
+                return true;
+            }
+            if(!type.equalsIgnoreCase("death") && !type.equalsIgnoreCase("kill")) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidType + " " + LangStrings.TryWithType.replace("%id", id));
+                return true;
+            }
+            if(!(cs instanceof Player)) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.OnlyPlayers);
+                return true;
+            } else if(!cs.hasPermission("deathchest.remove")) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
+                return true;
+            }
+            Player p = (Player) cs;
+            if(type.equalsIgnoreCase("death")) {
+                if(!Helper.IsNumeric(id)) {
+                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidId + " " + LangStrings.IdIsNotANumber.replace("%id", id));
+                    return true;
+                }
+                int numId = Integer.parseInt(id);
+                DeathChest dc = DeathChest.DeathChestById(numId);
+                if(dc == null) {
+                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoChestWithId.replace("%type", LangStrings.DeathChest).replace("%id", id));
+                    return true;
+                }
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveWarning);
+                p.closeInventory();
+                for (ItemStack i : dc.DeathInventory.getContents())
+                {
+                    if(i != null) {
+                        p.getWorld().dropItemNaturally(p.getLocation(), i);
+                    }
+                }
+                dc.RemoveChest();
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.SuccessfullyRemoved.replace("%id", id));
+            } else if(type.equalsIgnoreCase("kill")) {
+                if(!Helper.IsNumeric(id)) {
+                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidId + " " + LangStrings.IdIsNotANumber.replace("%id", id));
+                    return true;
+                }
+                int numId = Integer.parseInt(id);
+                KillChest kc = KillChest.KillChestById(numId);
+                if(kc == null) {
+                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoChestWithId.replace("%type", LangStrings.KillChest).replace("%id", id));
+                    return true;
+                }
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveWarning);
+                p.closeInventory();
+                for (ItemStack i : kc.DeathInventory.getContents())
+                {
+                    if(i != null) {
+                        p.getWorld().dropItemNaturally(p.getLocation(), i);
+                    }
+                }
+                kc.RemoveChest();
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.SuccessfullyRemoved.replace("%id", id));
+                return true;
+            }
+        } else if(args.length == 4) {
+            String type = args[2];
+            String id = args[1];
+            String playerName = args[3];
+            if(!type.equalsIgnoreCase("death") && !type.equalsIgnoreCase("kill") && !type.equalsIgnoreCase("home")) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidType + " " + LangStrings.TryWithTypePlayer.replace("%id", id).replace("%player", playerName));
+                return true;
+            }
+            if(!cs.hasPermission("deathchest.remove")) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
+                return true;
+            }
+            OfflinePlayer p = Bukkit.getOfflinePlayer(playerName);
+            if(type.equalsIgnoreCase("death")) {
+                if(!Helper.IsNumeric(id)) {
+                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidId + " " + LangStrings.IdIsNotANumber.replace("%id", id));
+                    return true;
+                }
+                int numId = Integer.parseInt(id);
+                DeathChest dc = DeathChest.DeathChestById(numId);
+                if(dc == null) {
+                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoChestWithIdPlayer.replace("%type", LangStrings.DeathChest).replace("%id", id).replace("%player", playerName));
+                    return true;
+                }
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveWarning);
+                if(p.isOnline()) {
+                    for (ItemStack i : dc.DeathInventory.getContents())
+                    {
+                        if(i != null) {
+                            p.getPlayer().getWorld().dropItemNaturally(p.getPlayer().getLocation(), i);
+                        }
+                    }
+                }
+                dc.RemoveChest();
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.SuccessfullyRemovedPlayer.replace("%id", id).replace("%player", playerName));
+            } else if(type.equalsIgnoreCase("kill")) {
+                if(!Helper.IsNumeric(id)) {
+                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidId + " " + LangStrings.IdIsNotANumber.replace("%id", id));
+                    return true;
+                }
+                int numId = Integer.parseInt(id);
+                KillChest kc = KillChest.KillChestById(numId);
+                if(kc == null) {
+                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoChestWithIdPlayer.replace("%type", LangStrings.KillChest).replace("%id", id).replace("%player", playerName));
+                    return true;
+                }
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveWarning);
+                if(p.isOnline()) {
+                    for (ItemStack i : kc.DeathInventory.getContents())
+                    {
+                        if(i != null) {
+                            p.getPlayer().getWorld().dropItemNaturally(p.getPlayer().getLocation(), i);
+                        }
+                    }
+                }
+                kc.RemoveChest();
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.SuccessfullyRemovedPlayer.replace("%id", id).replace("%player", playerName));
+                return true;
+            } else if(type.equalsIgnoreCase("home")) {
+                HomeChest hc = HomeChest.HomeChestByPlayer(p);
+                if(hc == null) {
+                    cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoHomeChestPlayer.replace("%player", p.getName()));
+                    return true;
+                }
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.RemoveWarning);
+                if(p.isOnline()) {
+                    for (ItemStack i : hc.HomeInventory.getContents())
+                    {
+                        if(i != null) {
+                            p.getPlayer().getWorld().dropItemNaturally(p.getPlayer().getLocation(), i);
+                        }
+                    }
+                }
+                Location loc = hc.ChestLocation;
+                hc.RemoveChest();
+                if(loc.getBlock().getType() == Material.CHEST) {
+                    loc.getBlock().setType(Material.AIR);
+                }
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.HomeChestRemovedPlayer.replace("%player", p.getName()));
+            }
+        } else {
+            cs.sendMessage(LangStrings.Prefix + " " + LangStrings.TooManyOrTooFewArguments);
+            return true;
         }
+        return true;
     }
 }

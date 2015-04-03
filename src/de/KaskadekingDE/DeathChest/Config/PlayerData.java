@@ -23,10 +23,6 @@ public class PlayerData {
 
     }
 
-    public void reloadConfig() {
-        reloadPlayerConfig();
-    }
-
     public void reloadPlayerConfig() {
         playerConfig = YamlConfiguration.loadConfiguration(playerConfigFile);
         InputStream configStream = Main.plugin.getResource("players.yml");
@@ -36,19 +32,11 @@ public class PlayerData {
         }
     }
 
-    public FileConfiguration getConfig() {
-        return getPlayerConfig();
-    }
-
     public FileConfiguration getPlayerConfig() {
         if(playerConfig == null) {
             reloadPlayerConfig();
         }
         return playerConfig;
-    }
-
-    public void saveConfig() {
-        savePlayerConfig();
     }
 
     public void savePlayerConfig() {

@@ -1,14 +1,16 @@
-package de.KaskadekingDE.DeathChest;
+package de.KaskadekingDE.DeathChest.Classes.Serialization.v1_8_R1;
 
 import java.io.*;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import de.KaskadekingDE.DeathChest.Classes.Serialization.ISerialization;
 import net.minecraft.server.v1_8_R1.NBTBase;
 import net.minecraft.server.v1_8_R1.NBTCompressedStreamTools;
 import net.minecraft.server.v1_8_R1.NBTReadLimiter;
 import net.minecraft.server.v1_8_R1.NBTTagCompound;
 import net.minecraft.server.v1_8_R1.NBTTagList;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_8_R1.inventory.CraftInventoryCustom;
@@ -25,7 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 
 // For 1.8.1
-public class ItemSerialization {
+public class InventorySerialization implements ISerialization {
     // Current serialization version - we will use this to handle compatiblity
     private static final int VERSION = 1;
     // Types we can serialize
@@ -42,7 +44,8 @@ public class ItemSerialization {
     private static Method WRITE_NBT;
     private static Method READ_NBT;
 
-    public static String toBase64(Inventory inventory) {
+    @Override
+    public String toBase64(Inventory inventory) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         DataOutputStream dataOutput = new DataOutputStream(outputStream);
         NBTTagCompound root = new NBTTagCompound();
@@ -79,7 +82,8 @@ public class ItemSerialization {
         return Base64Coder.encodeLines(outputStream.toByteArray());
     }
 
-    public static Inventory fromBase64(String data) throws EOFException {
+    @Override
+    public Inventory fromBase64(String data) {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
         NBTTagCompound root = (NBTTagCompound) readNbt(new DataInputStream(inputStream), 0);
         new NBTTagCompound();
@@ -92,11 +96,11 @@ public class ItemSerialization {
         return parseInventory(root, itemList, type);
     }
 
-    private static Inventory parseInventory(NBTTagCompound root, NBTTagList itemList, String type) {
+    private Inventory parseInventory(NBTTagCompound root, NBTTagList itemList, String type) {
         Inventory inventory = new CraftInventoryCustom(null, itemList.size());
 
         for (int i = 0; i < itemList.size(); i++) {
-            NBTTagCompound inputObject = (NBTTagCompound) itemList.get(i);
+            NBTTagCompound inputObject = itemList.get(i);
             if (!inputObject.isEmpty()) {
                 inventory.setItem(i, CraftItemStack.asCraftMirror(
                         net.minecraft.server.v1_8_R1.ItemStack.createStack(inputObject)));
@@ -106,7 +110,7 @@ public class ItemSerialization {
         if (INVENTORY_CUSTOM.equals(type)) {
             return inventory;
         } else if (INVENTORY_PLAYER.equals(type)) {
-            return new OfflinePlayerInventry(inventory,
+            return new OfflinePlayerInventory(inventory,
                     root.getInt(NBT_PLAYER_HELD_INDEX),
                     root.getString(NBT_PLAYER_NAME));
         } else {
@@ -114,7 +118,7 @@ public class ItemSerialization {
         }
     }
 
-    private static void writeNbt(NBTBase base, DataOutput output) {
+    private void writeNbt(NBTBase base, DataOutput output) {
         if (WRITE_NBT == null) {
             try {
                 WRITE_NBT = NBTCompressedStreamTools.class.getDeclaredMethod("a", NBTBase.class, DataOutput.class);
@@ -130,7 +134,7 @@ public class ItemSerialization {
         }
     }
 
-    private static NBTBase readNbt(DataInput input, int level) {
+    private NBTBase readNbt(DataInput input, int level) {
         if (READ_NBT == null) {
             try {
 // NBTReadLimiter is new in 1.7.9
@@ -147,17 +151,7 @@ public class ItemSerialization {
         }
     }
 
-    public static Inventory getInventoryFromArray(ItemStack[] items) {
-        CraftInventoryCustom custom = new CraftInventoryCustom(null, items.length);
-        for (int i = 0; i < items.length; i++) {
-            if (items[i] != null) {
-                custom.setItem(i, items[i]);
-            }
-        }
-        return custom;
-    }
-
-    private static CraftItemStack getCraftVersion(ItemStack stack) {
+    private CraftItemStack getCraftVersion(ItemStack stack) {
         if (stack instanceof CraftItemStack)
             return (CraftItemStack) stack;
         else if (stack != null)
@@ -166,13 +160,19 @@ public class ItemSerialization {
             return null;
     }
 
-    private static class OfflinePlayerInventry extends ForwardingInventory implements PlayerInventory {
+    @Override
+    public String getVersion() {
+        return "v1_8_R1";
+    }
+
+    private static class OfflinePlayerInventory extends ForwardingInventory implements PlayerInventory {
         private int heldItemSlot;
         private String playerName;
 
-        public OfflinePlayerInventry(Inventory delegate, int heldItemSlot, String playerName) {
+        public OfflinePlayerInventory(Inventory delegate, int heldItemSlot, String playerName) {
             super(delegate, InventoryType.PLAYER);
             this.heldItemSlot = heldItemSlot;
+            this.playerName = playerName;
         }
 
         @SuppressWarnings("deprecation")
@@ -214,7 +214,7 @@ public class ItemSerialization {
 
         @Override
         public ItemStack getBoots() {
-            return getItem(getSize() + 0);
+            return getItem(getSize());
         }
 
         @Override
@@ -245,7 +245,7 @@ public class ItemSerialization {
 
         @Override
         public void setBoots(ItemStack boots) {
-            setItem(getSize() + 0, boots);
+            setItem(getSize(), boots);
         }
 
         @Override

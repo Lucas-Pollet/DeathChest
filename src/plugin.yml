@@ -1,12 +1,12 @@
 name: DeathChest
 description: Creates a chest with all drops when you die.
 author: KaskadekingDE
-version: 1.7.3
-depend: [ProtocolLib]
+version: 2.0
+softdepend: [PacketListenerApi]
 main: de.KaskadekingDE.DeathChest.Main
 
 commands:
   deathchest:
     description: Main Command
     usage: /deathchest <args>
-    aliases: [dc]
+    aliases: [dchest]
