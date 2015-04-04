@@ -187,7 +187,7 @@ public class HomeChestEvent implements Listener {
             if(hc == null) {
                 return;
             }
-            if(hc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
+            if(!hc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%type", LangStrings.HomeChest).replace("%owner", hc.Owner.getName()));
                 e.setCancelled(true);
                 return;
