@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
+import org.bukkit.block.Sign;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -39,6 +40,7 @@ public class Helper {
     }
 
     public static Location ChestNearLocation(Location loc) {
+        if(loc.getBlock().getType() == Material.SIGN_POST) return null;
         Location locEast = new Location(loc.getWorld(), loc.getX() + 1, loc.getY(), loc.getZ());
         Location locSouth = new Location(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ() + 1);
         Location locWest = new Location(loc.getWorld(), loc.getX() - 1, loc.getY(), loc.getZ());

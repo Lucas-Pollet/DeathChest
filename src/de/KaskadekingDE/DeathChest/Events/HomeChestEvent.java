@@ -188,7 +188,7 @@ public class HomeChestEvent implements Listener {
                 return;
             }
             if(!hc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
-                p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%type", LangStrings.HomeChest).replace("%owner", hc.Owner.getName()));
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest).replace("%owner", hc.Owner.getName()));
                 e.setCancelled(true);
                 return;
             } else if(p.hasPermission("deathchest.protection.bypass") & !hc.EqualsOwner(p)) {

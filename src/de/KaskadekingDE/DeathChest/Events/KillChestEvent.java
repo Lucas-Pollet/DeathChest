@@ -4,6 +4,7 @@ import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
+import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.Animation.AnimationManager;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import de.KaskadekingDE.DeathChest.Main;
@@ -11,18 +12,25 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
+import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -42,9 +50,30 @@ public class KillChestEvent implements Listener {
         if(killer.hasPermission("deathchest.place.kill")) {
             if(checkRequirements(killer, loc, e.getDrops())) {
                 loc = Helper.AvailableLocation(loc);
-                loc.getBlock().setType(Material.CHEST);
-                Chest deathChest = (Chest) loc.getBlock().getState();
-                Inventory inv = Bukkit.getServer().createInventory(deathChest.getInventory().getHolder(), 54, LangStrings.KillChestInv);
+                Inventory inv;
+                if (Main.UseTombstones) {
+                    Block block = loc.getWorld().getBlockAt(loc);
+                    block.setType(Material.SIGN_POST);
+                    Sign sign = (Sign) block;
+                    DateFormat dateFormat = new SimpleDateFormat("dd.MM HH:mm:ss");
+                    Date date = new Date();
+                    String dateString = dateFormat.format(date);
+                    String lineOne = LangStrings.LineOne.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
+                    String lineTwo = LangStrings.LineTwo.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
+                    String lineThree = LangStrings.LineThree.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
+                    String lineFour = LangStrings.LineFour.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
+                    sign.setLine(0, lineOne);
+                    sign.setLine(1, lineTwo);
+                    sign.setLine(2, lineThree);
+                    sign.setLine(3, lineFour);
+                    sign.update();
+                    SignHolder sh = new SignHolder(LangStrings.KillChestInv, 54, sign);
+                    inv = sh.getInventory();
+                } else {
+                    loc.getBlock().setType(Material.CHEST);
+                    Chest killChest = (Chest) loc.getBlock().getState();
+                    inv = Bukkit.getServer().createInventory(killChest.getInventory().getHolder(), 54, LangStrings.KillChestInv);
+                }
                 for(ItemStack drop: e.getDrops()) {
                     inv.addItem(drop);
                 }
@@ -57,6 +86,29 @@ public class KillChestEvent implements Listener {
                     chest.RegisterTask(killer, loc);
                 }
             }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onInteract(PlayerInteractEvent e) {
+        if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.SIGN_POST) {
+            Player p = e.getPlayer();
+            Location loc = e.getClickedBlock().getLocation();
+            KillChest kc = KillChest.KillChestByLocation(loc);
+            if (kc == null) {
+                return;
+            }
+            if (!kc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%owner", kc.Owner.getName()).replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+                e.setCancelled(true);
+                return;
+            } else if (p.hasPermission("deathchest.protection.bypass") & !kc.EqualsOwner(p)) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.ThisChestBelongsTo.replace("%owner", kc.Owner.getName()));
+            }
+            if (Main.HookedPacketListener) {
+                Main.ProtocolManager.SendChestOpenPacket(kc.ChestLocation, p);
+            }
+            p.openInventory(kc.DeathInventory);
         }
     }
 
@@ -105,6 +157,21 @@ public class KillChestEvent implements Listener {
             if(Helper.ChestEmpty(kc.DeathInventory)) {
                 kc.RemoveChest(true);
             }
+        } else if (ih instanceof SignHolder) {
+            SignHolder sh = (SignHolder) ih;
+            Sign sign = sh.getSign();
+            Location loc = new Location(sign.getLocation().getWorld(), sign.getLocation().getBlockX(), sign.getLocation().getBlockY(), sign.getLocation().getBlockZ());
+            KillChest dc = KillChest.KillChestByLocation(loc);
+            if (dc == null) {
+                return;
+            }
+            if (Main.HookedPacketListener) {
+                Main.ProtocolManager.SendChestClosePacket(dc.ChestLocation, p);
+            }
+            if (Helper.ChestEmpty(dc.DeathInventory)) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestRemoved);
+                dc.RemoveChest(true);
+            }
         }
     }
 
@@ -114,7 +181,7 @@ public class KillChestEvent implements Listener {
         }
         if(Main.MaximumKillChests != -1) {
             if(KillChest.KillChestsByOwner(p).size() >= Main.MaximumKillChests || KillChest.NextAvailableId(p) == -1) {
-                p.sendMessage(LangStrings.Prefix + " " + LangStrings.ReachedMaximumChests.replace("%type", LangStrings.KillChest));
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.ReachedMaximumChests.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
                 return false;
             }
         }
@@ -137,7 +204,7 @@ public class KillChestEvent implements Listener {
         }
         boolean placeChest = false;
         if(deathLoc.getBlockY() < 0) {
-            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest));
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
             return false;
         }
         for(Location currentLoc: Helper.LocationsAround(deathLoc)) {
@@ -158,7 +225,7 @@ public class KillChestEvent implements Listener {
             }
         }
         if(!placeChest) {
-            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest));
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
             return false;
         }
         return true;

@@ -88,11 +88,11 @@ public class DeathChest implements Comparable<DeathChest>{
         Runnable timeout = new Runnable() {
             @Override
             public void run() {
-                if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST) {
+                if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.SIGN_POST) {
                     loc.getBlock().setType(Material.AIR);
                     RemoveChest();
                     if(p.isOnline()) {
-                        p.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.Despawned.replace("%type", LangStrings.DeathChest));
+                        p.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.Despawned.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
                     }
                 }
                 TaskScheduler.RemoveTask(TaskId);
@@ -110,7 +110,7 @@ public class DeathChest implements Comparable<DeathChest>{
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".death-chests." + GetId(), null);
         Main.playerData.savePlayerConfig();
         DeathChestManager.Remove(ChestLocation);
-        if(ChestLocation.getBlock().getType() == Material.CHEST) {
+        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST) {
             ChestLocation.getBlock().setType(Material.AIR);
         }
         Owner = null;
@@ -132,7 +132,7 @@ public class DeathChest implements Comparable<DeathChest>{
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".death-chests." + GetId(), null);
         Main.playerData.savePlayerConfig();
         DeathChestManager.Remove(ChestLocation);
-        if(ChestLocation.getBlock().getType() == Material.CHEST) {
+        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST) {
             ChestLocation.getBlock().setType(Material.AIR);
         }
         Owner = null;

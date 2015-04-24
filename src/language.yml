@@ -1,8 +1,10 @@
 prefix: '&6[&cDeathChest&6]'
 # Chest-Type
-death-chest: 'death chest'
-kill-chest: 'kill chest'
-home-chest: 'home chest'
+death-chest: 'death'
+kill-chest: 'kill'
+home-chest: 'home'
+type-chest: 'chest'
+type-tombstone: 'tombstone'
 # Inventory-Name
 death-inv-name: 'Death Chest'
 kill-inv-name: 'Kill Chest'
@@ -66,3 +68,8 @@ no-chest-with-id-player: '&c%player don''t have a %type with the id %id'
 successfully-removed: '&aSuccessfully removed %id'
 successfully-removed-player: '&aSuccessfully removed %id from %player'
 id-is-not-a-number: '&c%id is not a number.'
+# Tomb-Stone Lines
+line-one: '&1[&6%chest&1]'
+line-two: 'R.I.P'
+line-three: '%player'
+line-four: '%date'

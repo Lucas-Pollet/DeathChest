@@ -9,6 +9,9 @@ public class LangStrings {
     public static String DeathChestInv;
     public static String KillChestInv;
     public static String HomeChestInv;
+    public static String TypeChest;
+    public static String TypeTombstone;
+    public static String ActiveType;
 
     public static String NoPermissions;
     public static String OnlyPlayers;
@@ -68,4 +71,10 @@ public class LangStrings {
     public static String SuccessfullyRemoved;
     public static String SuccessfullyRemovedPlayer;
     public static String IdIsNotANumber;
+
+    public static String LineOne;
+    public static String LineTwo;
+    public static String LineThree;
+    public static String LineFour;
+
 }

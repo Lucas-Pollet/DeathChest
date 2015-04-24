@@ -91,11 +91,11 @@ public class KillChest implements Comparable<KillChest>{
         Runnable timeout = new Runnable() {
             @Override
             public void run() {
-                if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST) {
+                if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getBlock().getType() == Material.SIGN_POST) {
                     loc.getBlock().setType(Material.AIR);
                     RemoveChest();
                     if(p.isOnline()) {
-                        p.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.Despawned.replace("%type", LangStrings.KillChest));
+                        p.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.Despawned.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
                     }
                 }
                 TaskScheduler.RemoveTask(TaskId);
@@ -113,7 +113,7 @@ public class KillChest implements Comparable<KillChest>{
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".kill-chests." + GetId(), null);
         Main.playerData.savePlayerConfig();
         KillChestManager.Remove(ChestLocation);
-        if(ChestLocation.getBlock().getType() == Material.CHEST) {
+        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST) {
             ChestLocation.getBlock().setType(Material.AIR);
         }
         Owner = null;
@@ -136,7 +136,7 @@ public class KillChest implements Comparable<KillChest>{
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".kill-chests." + GetId(), null);
         Main.playerData.savePlayerConfig();
         KillChestManager.Remove(ChestLocation);
-        if(ChestLocation.getBlock().getType() == Material.CHEST) {
+        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST) {
             ChestLocation.getBlock().setType(Material.AIR);
         }
         Owner = null;
