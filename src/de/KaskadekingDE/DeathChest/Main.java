@@ -10,6 +10,8 @@ import de.KaskadekingDE.DeathChest.Classes.Helper;
 import de.KaskadekingDE.DeathChest.Classes.PacketManagement.IProtocolManager;
 import de.KaskadekingDE.DeathChest.Classes.Serialization.ISerialization;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
+import de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.IBlockManager;
+import de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R1.SolidBlockManager;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.TaskScheduler;
 import de.KaskadekingDE.DeathChest.Commands.DeathChestCommand;
 import de.KaskadekingDE.DeathChest.Config.LanguageConfig;
@@ -40,6 +42,7 @@ public class Main extends JavaPlugin {
 
     public static ISerialization Serialization;
     public static IProtocolManager ProtocolManager;
+    public static IBlockManager SolidBlockManager;
 
     // Player-Data & Language
     public static PlayerData playerData;
@@ -61,8 +64,10 @@ public class Main extends JavaPlugin {
         plugin = this;
         if(Helper.ServerVersion().startsWith("v1_8_R1")) {
             Serialization = new de.KaskadekingDE.DeathChest.Classes.Serialization.v1_8_R1.InventorySerialization();
+            SolidBlockManager = new de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R1.SolidBlockManager();
         } else if(Helper.ServerVersion().startsWith("v1_8_R2")) {
             Serialization = new de.KaskadekingDE.DeathChest.Classes.Serialization.v1_8_R2.InventorySerialization();
+            SolidBlockManager = new de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R2.SolidBlockManager();
         } else {
             log.severe("[DeathChest] This server version is not supported (" + Helper.ServerVersion() + ")");
             Bukkit.getPluginManager().disablePlugin(this);

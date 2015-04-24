@@ -243,7 +243,13 @@ public class DeathChestEvent implements Listener {
                 break;
             }
         }
-
+        if(Main.UseTombstones) {
+            Location blockUnderSign = loc.add(0.0, -1.0, 0.0);
+            if(!Main.SolidBlockManager.IsSolid(blockUnderSign)) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+                return false;
+            }
+        }
         if (!placeChest) {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
             return false;
