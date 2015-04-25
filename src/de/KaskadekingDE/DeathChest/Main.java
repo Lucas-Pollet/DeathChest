@@ -12,6 +12,8 @@ import de.KaskadekingDE.DeathChest.Classes.Serialization.ISerialization;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.IBlockManager;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.TaskScheduler;
+import de.KaskadekingDE.DeathChest.Classes.WorldGuard.DeathChestWGFlag;
+import de.KaskadekingDE.DeathChest.Classes.WorldGuard.IWorldGuardFlag;
 import de.KaskadekingDE.DeathChest.Commands.DeathChestCommand;
 import de.KaskadekingDE.DeathChest.Config.LanguageConfig;
 import de.KaskadekingDE.DeathChest.Config.PlayerData;
@@ -60,6 +62,8 @@ public class Main extends JavaPlugin {
     public static boolean SpawnTombstonesOnNonSolid;
     public static boolean SpawnChestIfNotAbleToPlaceTombstone;
 
+    public static IWorldGuardFlag WorldGuardManager;
+
     @Override
     public void onEnable() {
         plugin = this;
@@ -75,6 +79,7 @@ public class Main extends JavaPlugin {
             return;
         }
         checkPacketListener();
+        checkWorldGuard();
         LoadConfig();
         PluginDescriptionFile pdf = getDescription();
         getCommand("deathchest").setExecutor(new DeathChestCommand());
@@ -98,6 +103,13 @@ public class Main extends JavaPlugin {
         }
         plugin = null;
         log.info("[DeathChest] DeathChest has been disabled!");
+    }
+
+    private void checkWorldGuard() {
+        if(Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
+            WorldGuardManager = new DeathChestWGFlag();
+            WorldGuardManager.InitWgp();
+        }
     }
 
     private void checkPacketListener() {

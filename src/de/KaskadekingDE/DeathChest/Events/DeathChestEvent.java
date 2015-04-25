@@ -237,29 +237,16 @@ public class DeathChestEvent implements Listener {
         if (!worldAllowed) {
             return false;
         }
-        boolean placeChest = false;
+        if(Main.WorldGuardManager != null && !Main.WorldGuardManager.canPlaceInRegion(loc.getWorld(), loc)) {
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+            return false;
+        }
         if (p.getLocation().getBlockY() < 0) {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
             return false;
         }
-        for (Location currentLoc : Helper.LocationsAround(loc)) {
-            Material deathBlockMaterial = currentLoc.getBlock().getType();
-            for (String key : Main.AllowedBlocks) {
-                if (key.equalsIgnoreCase("*")) {
-                    placeChest = true;
-                    break;
-                }
-                Material allowedMat = Material.getMaterial(key);
-                if (allowedMat == deathBlockMaterial) {
-                    placeChest = true;
-                    break;
-                }
-            }
-            if (placeChest) {
-                break;
-            }
-        }
-        if (!placeChest) {
+        Location availableLocation = Helper.AvailableLocation(loc);
+        if(availableLocation == null) {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
             return false;
         }

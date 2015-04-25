@@ -217,27 +217,18 @@ public class KillChestEvent implements Listener {
         if(!worldAllowed) {
             return false;
         }
-        boolean placeChest = false;
+        if(Main.WorldGuardManager != null && !Main.WorldGuardManager.canPlaceInRegion(deathLoc.getWorld(), deathLoc)) {
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
+            return false;
+        }
         if(deathLoc.getBlockY() < 0) {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
             return false;
         }
-        for(Location currentLoc: Helper.LocationsAround(deathLoc)) {
-            Material deathBlockMaterial = currentLoc.getBlock().getType();
-            for(String key: Main.AllowedBlocks) {
-                if(key.equalsIgnoreCase("*")) {
-                    placeChest = true;
-                    break;
-                }
-                Material allowedMat = Material.getMaterial(key);
-                if(allowedMat == deathBlockMaterial) {
-                    placeChest = true;
-                    break;
-                }
-            }
-            if(placeChest) {
-                break;
-            }
+        Location availableLocation = Helper.AvailableLocation(deathLoc);
+        if(availableLocation == null) {
+            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
+            return false;
         }
         if(Main.UseTombstones) {
             Location blockUnderSign = deathLoc.add(0.0, -1.0, 0.0);
@@ -245,10 +236,6 @@ public class KillChestEvent implements Listener {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
                 return false;
             }
-        }
-        if(!placeChest) {
-            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
-            return false;
         }
         return true;
     }

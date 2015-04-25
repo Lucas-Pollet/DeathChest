@@ -2,7 +2,7 @@ name: DeathChest
 description: Creates a chest with all drops when you die.
 author: KaskadekingDE
 version: 2.2
-softdepend: [PacketListenerApi]
+softdepend: [PacketListenerApi,WorldGuard]
 main: de.KaskadekingDE.DeathChest.Main
 
 commands:
