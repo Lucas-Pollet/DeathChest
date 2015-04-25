@@ -5,7 +5,6 @@ import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.Animation.AnimationManager;
-import de.KaskadekingDE.DeathChest.Classes.Tasks.TaskScheduler;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import de.KaskadekingDE.DeathChest.Main;
 import org.bukkit.Bukkit;
@@ -49,25 +48,42 @@ public class DeathChestEvent implements Listener {
         if (p.hasPermission("deathchest.place.death")) {
             if (checkRequirements(p, e.getDrops())) {
                 loc = Helper.AvailableLocation(loc);
-                Inventory inv;
+                Inventory inv = null;
+                boolean spawnSign = true;
                 if (Main.UseTombstones) {
-                    Block block = loc.getWorld().getBlockAt(loc);
-                    block.setType(Material.SIGN_POST);
-                    Sign sign = (Sign) block.getState();
-                    DateFormat dateFormat = new SimpleDateFormat("dd.MM HH:mm:ss");
-                    Date date = new Date();
-                    String dateString = dateFormat.format(date);
-                    String lineOne = LangStrings.LineOne.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
-                    String lineTwo = LangStrings.LineTwo.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
-                    String lineThree = LangStrings.LineThree.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
-                    String lineFour = LangStrings.LineFour.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
-                    sign.setLine(0, lineOne);
-                    sign.setLine(1, lineTwo);
-                    sign.setLine(2, lineThree);
-                    sign.setLine(3, lineFour);
-                    sign.update();
-                    SignHolder sh = new SignHolder(LangStrings.DeathChestInv, 54, sign);
-                    inv = sh.getInventory();
+                    Location blockUnderSign = new Location(loc.getWorld(), loc.getBlockX(), loc.getBlockY() - 1, loc.getBlockZ());
+                    if(!Main.SolidBlockManager.IsSolid(blockUnderSign)) {
+                       if(!Main.SpawnTombstonesOnNonSolid) {
+                           if(!Main.SpawnChestIfNotAbleToPlaceTombstone) {
+                               p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+                               return;
+                           } else {
+                               loc.getBlock().setType(Material.CHEST);
+                               Chest deathChest = (Chest) loc.getBlock().getState();
+                               inv = Bukkit.getServer().createInventory(deathChest.getInventory().getHolder(), 54, LangStrings.DeathChestInv);
+                               spawnSign = false;
+                           }
+                       }
+                    }
+                    if(spawnSign) {
+                        Block block = loc.getBlock();
+                        block.setType(Material.SIGN_POST);
+                        Sign sign = (Sign) block.getState();
+                        DateFormat dateFormat = new SimpleDateFormat("dd.MM HH:mm:ss");
+                        Date date = new Date();
+                        String dateString = dateFormat.format(date);
+                        String lineOne = LangStrings.LineOne.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
+                        String lineTwo = LangStrings.LineTwo.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
+                        String lineThree = LangStrings.LineThree.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
+                        String lineFour = LangStrings.LineFour.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
+                        sign.setLine(0, lineOne);
+                        sign.setLine(1, lineTwo);
+                        sign.setLine(2, lineThree);
+                        sign.setLine(3, lineFour);
+                        sign.update();
+                        SignHolder sh = new SignHolder(LangStrings.DeathChestInv, 54, sign);
+                        inv = sh.getInventory();
+                    }
                 } else {
                     loc.getBlock().setType(Material.CHEST);
                     Chest deathChest = (Chest) loc.getBlock().getState();
@@ -241,13 +257,6 @@ public class DeathChestEvent implements Listener {
             }
             if (placeChest) {
                 break;
-            }
-        }
-        if(Main.UseTombstones) {
-            Location blockUnderSign = loc.add(0.0, -1.0, 0.0);
-            if(!Main.SolidBlockManager.IsSolid(blockUnderSign)) {
-                p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-                return false;
             }
         }
         if (!placeChest) {

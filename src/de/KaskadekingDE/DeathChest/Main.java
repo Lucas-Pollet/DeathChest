@@ -11,7 +11,6 @@ import de.KaskadekingDE.DeathChest.Classes.PacketManagement.IProtocolManager;
 import de.KaskadekingDE.DeathChest.Classes.Serialization.ISerialization;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.IBlockManager;
-import de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R1.SolidBlockManager;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.TaskScheduler;
 import de.KaskadekingDE.DeathChest.Commands.DeathChestCommand;
 import de.KaskadekingDE.DeathChest.Config.LanguageConfig;
@@ -58,6 +57,8 @@ public class Main extends JavaPlugin {
     public static boolean AllowHomeChestInAllWorlds;
     public static boolean HookedPacketListener;
     public static boolean UseTombstones;
+    public static boolean SpawnTombstonesOnNonSolid;
+    public static boolean SpawnChestIfNotAbleToPlaceTombstone;
 
     @Override
     public void onEnable() {
@@ -127,6 +128,8 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("show-coords", false);
         getConfig().addDefault("allow-home-chests-in-all-worlds", false);
         getConfig().addDefault("use-tombstones", false);
+        getConfig().addDefault("spawn-tombstones-on-non-solid-blocks", false);
+        getConfig().addDefault("spawn-chest-if-tombstone-cant-be-placed", false);
         getConfig().addDefault("allowed-blocks", Arrays.asList(defaultList));
         getConfig().addDefault("allowed-worlds", Arrays.asList(defaultWorlds));
         getConfig().options().copyDefaults(true);
@@ -139,6 +142,8 @@ public class Main extends JavaPlugin {
         ShowCoords = getConfig().getBoolean("show-coords");
         AllowHomeChestInAllWorlds = getConfig().getBoolean("allow-home-chest-in-all-worlds");
         UseTombstones = getConfig().getBoolean("use-tombstones");
+        SpawnTombstonesOnNonSolid = getConfig().getBoolean("spawn-tombstones-on-non-solid-blocks");
+        SpawnChestIfNotAbleToPlaceTombstone = getConfig().getBoolean("spawn-chest-if-tombstone-cant-be-placed");
         playerData = new PlayerData(this);
         languageConfig = new LanguageConfig(this);
         playerData.saveDefaultPlayerConfig();

@@ -1,7 +1,5 @@
 package de.KaskadekingDE.DeathChest.Events;
 
-import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
-import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
@@ -50,25 +48,42 @@ public class KillChestEvent implements Listener {
         if(killer.hasPermission("deathchest.place.kill")) {
             if(checkRequirements(killer, loc, e.getDrops())) {
                 loc = Helper.AvailableLocation(loc);
-                Inventory inv;
+                Inventory inv = null;
+                boolean spawnSign = true;
                 if (Main.UseTombstones) {
-                    Block block = loc.getWorld().getBlockAt(loc);
-                    block.setType(Material.SIGN_POST);
-                    Sign sign = (Sign) block;
-                    DateFormat dateFormat = new SimpleDateFormat("dd.MM HH:mm:ss");
-                    Date date = new Date();
-                    String dateString = dateFormat.format(date);
-                    String lineOne = LangStrings.LineOne.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
-                    String lineTwo = LangStrings.LineTwo.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
-                    String lineThree = LangStrings.LineThree.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
-                    String lineFour = LangStrings.LineFour.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
-                    sign.setLine(0, lineOne);
-                    sign.setLine(1, lineTwo);
-                    sign.setLine(2, lineThree);
-                    sign.setLine(3, lineFour);
-                    sign.update();
-                    SignHolder sh = new SignHolder(LangStrings.KillChestInv, 54, sign);
-                    inv = sh.getInventory();
+                    Location blockUnderSign = new Location(loc.getWorld(), loc.getBlockX(), loc.getBlockY() - 1, loc.getBlockZ());
+                    if(!Main.SolidBlockManager.IsSolid(blockUnderSign)) {
+                        if (!Main.SpawnTombstonesOnNonSolid) {
+                            if (!Main.SpawnChestIfNotAbleToPlaceTombstone) {
+                                p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+                                return;
+                            } else {
+                                loc.getBlock().setType(Material.CHEST);
+                                Chest killChest = (Chest) loc.getBlock().getState();
+                                inv = Bukkit.getServer().createInventory(killChest.getInventory().getHolder(), 54, LangStrings.KillChestInv);
+                                spawnSign = false;
+                            }
+                        }
+                    }
+                    if(spawnSign) {
+                        Block block = loc.getBlock();
+                        block.setType(Material.SIGN_POST);
+                        Sign sign = (Sign) block;
+                        DateFormat dateFormat = new SimpleDateFormat("dd.MM HH:mm:ss");
+                        Date date = new Date();
+                        String dateString = dateFormat.format(date);
+                        String lineOne = LangStrings.LineOne.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
+                        String lineTwo = LangStrings.LineTwo.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
+                        String lineThree = LangStrings.LineThree.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
+                        String lineFour = LangStrings.LineFour.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
+                        sign.setLine(0, lineOne);
+                        sign.setLine(1, lineTwo);
+                        sign.setLine(2, lineThree);
+                        sign.setLine(3, lineFour);
+                        sign.update();
+                        SignHolder sh = new SignHolder(LangStrings.KillChestInv, 54, sign);
+                        inv = sh.getInventory();
+                    }
                 } else {
                     loc.getBlock().setType(Material.CHEST);
                     Chest killChest = (Chest) loc.getBlock().getState();
