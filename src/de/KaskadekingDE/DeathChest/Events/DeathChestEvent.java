@@ -72,10 +72,10 @@ public class DeathChestEvent implements Listener {
                         DateFormat dateFormat = new SimpleDateFormat("dd.MM HH:mm:ss");
                         Date date = new Date();
                         String dateString = dateFormat.format(date);
-                        String lineOne = LangStrings.LineOne.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
-                        String lineTwo = LangStrings.LineTwo.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
-                        String lineThree = LangStrings.LineThree.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
-                        String lineFour = LangStrings.LineFour.replace("%player", p.getDisplayName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv);
+                        String lineOne = LangStrings.LineOne.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv).replace("%displayname", p.getDisplayName());
+                        String lineTwo = LangStrings.LineTwo.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv).replace("%displayname", p.getDisplayName());;
+                        String lineThree = LangStrings.LineThree.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv).replace("%displayname", p.getDisplayName());;
+                        String lineFour = LangStrings.LineFour.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv).replace("%displayname", p.getDisplayName());;
                         sign.setLine(0, lineOne);
                         sign.setLine(1, lineTwo);
                         sign.setLine(2, lineThree);
