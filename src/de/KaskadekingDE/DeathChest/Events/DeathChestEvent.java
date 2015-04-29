@@ -41,7 +41,7 @@ public class DeathChestEvent implements Listener {
     public void onPlayerDeath(PlayerDeathEvent e) {
         Player p = e.getEntity();
         Location loc = p.getLocation();
-        if (p.getKiller() != null && p.getKiller().hasPermission("deathchest.place.kill")) {
+        if (!Main.DisableKillChests && p.getKiller() != null && p.getKiller().hasPermission("deathchest.place.kill") && !p.hasPermission("deathchest.protection.kill")) {
             // Let do killer chest to the work
             return;
         }

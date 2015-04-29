@@ -61,6 +61,7 @@ public class Main extends JavaPlugin {
     public static boolean UseTombstones;
     public static boolean SpawnTombstonesOnNonSolid;
     public static boolean SpawnChestIfNotAbleToPlaceTombstone;
+    public static boolean DisableKillChests;
 
     public static IWorldGuardFlag WorldGuardManager;
 
@@ -136,6 +137,7 @@ public class Main extends JavaPlugin {
         String[] defaultWorlds = {"world"};
         getConfig().addDefault("maximum-deathchests", 3);
         getConfig().addDefault("maximum-killchests", 2);
+        getConfig().addDefault("disable-killchests", false);
         getConfig().addDefault("remove-chest-after-x-seconds", 120);
         getConfig().addDefault("show-coords", false);
         getConfig().addDefault("allow-home-chests-in-all-worlds", false);
@@ -156,6 +158,7 @@ public class Main extends JavaPlugin {
         UseTombstones = getConfig().getBoolean("use-tombstones");
         SpawnTombstonesOnNonSolid = getConfig().getBoolean("spawn-tombstones-on-non-solid-blocks");
         SpawnChestIfNotAbleToPlaceTombstone = getConfig().getBoolean("spawn-chest-if-tombstone-cant-be-placed");
+        DisableKillChests = getConfig().getBoolean("disable-killchests");
         playerData = new PlayerData(this);
         languageConfig = new LanguageConfig(this);
         playerData.saveDefaultPlayerConfig();

@@ -45,7 +45,7 @@ public class KillChestEvent implements Listener {
             return;
         }
         Location loc = p.getLocation();
-        if(killer.hasPermission("deathchest.place.kill")) {
+        if(killer.hasPermission("deathchest.place.kill") && !p.hasPermission("deathchest.protection.kill")) {
             if(checkRequirements(killer, loc, e.getDrops())) {
                 loc = Helper.AvailableLocation(loc);
                 Inventory inv = null;
@@ -192,6 +192,9 @@ public class KillChestEvent implements Listener {
 
     private boolean checkRequirements(Player p, Location deathLoc, List<ItemStack> drops) {
         if(drops == null || drops.size() == 0) {
+            return false;
+        }
+        if(Main.DisableKillChests) {
             return false;
         }
         if(Main.MaximumKillChests != -1) {
