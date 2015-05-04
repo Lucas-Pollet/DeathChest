@@ -1,8 +1,6 @@
 package de.KaskadekingDE.DeathChest.Events;
 
-import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
-import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.Animation.AnimationManager;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
@@ -135,6 +133,10 @@ public class HomeChestEvent implements Listener {
         if(p.hasPermission("deathchest.place.home")) {
             HomeChest hc = HomeChest.HomeChestByPlayer(p);
             if(hc != null && !hc.IsFull()) {
+                String w = p.getWorld().getName();
+                if(Main.HomeChestOnlyActiveWhitelistedWorlds && !Main.AllowedWorlds.contains(w)) {
+                    return;
+                }
                 Iterator<ItemStack> iter = e.getDrops().iterator();
                 List<ItemStack> itemsRemoved = new ArrayList<ItemStack>();
                 boolean placedAllItems = true;

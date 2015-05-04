@@ -62,6 +62,7 @@ public class Main extends JavaPlugin {
     public static boolean SpawnTombstonesOnNonSolid;
     public static boolean SpawnChestIfNotAbleToPlaceTombstone;
     public static boolean DisableKillChests;
+    public static boolean HomeChestOnlyActiveWhitelistedWorlds;
 
     public static IWorldGuardFlag WorldGuardManager;
 
@@ -72,7 +73,7 @@ public class Main extends JavaPlugin {
             Serialization = new de.KaskadekingDE.DeathChest.Classes.Serialization.v1_8_R1.InventorySerialization();
             SolidBlockManager = new de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R1.SolidBlockManager();
         } else if(Helper.ServerVersion().startsWith("v1_8_R2")) {
-            Serialization = new de.KaskadekingDE.DeathChest.Classes.Serialization.v1_8_R2.InventorySerialization();
+            Serialization = new de.KaskadekingDE.DeathChest.Classes.Serialization.Debug.InventorySerialization();
             SolidBlockManager = new de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R2.SolidBlockManager();
         } else {
             log.severe("[DeathChest] This server version is not supported (" + Helper.ServerVersion() + ")");
@@ -140,6 +141,7 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("disable-killchests", false);
         getConfig().addDefault("remove-chest-after-x-seconds", 120);
         getConfig().addDefault("show-coords", false);
+        getConfig().addDefault("home-chest-only-active-in-whitelisted-worlds", false);
         getConfig().addDefault("allow-home-chests-in-all-worlds", false);
         getConfig().addDefault("use-tombstones", false);
         getConfig().addDefault("spawn-tombstones-on-non-solid-blocks", false);
