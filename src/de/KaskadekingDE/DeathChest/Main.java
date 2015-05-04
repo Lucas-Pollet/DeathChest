@@ -73,7 +73,7 @@ public class Main extends JavaPlugin {
             Serialization = new de.KaskadekingDE.DeathChest.Classes.Serialization.v1_8_R1.InventorySerialization();
             SolidBlockManager = new de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R1.SolidBlockManager();
         } else if(Helper.ServerVersion().startsWith("v1_8_R2")) {
-            Serialization = new de.KaskadekingDE.DeathChest.Classes.Serialization.Debug.InventorySerialization();
+            Serialization = new de.KaskadekingDE.DeathChest.Classes.Serialization.v1_8_R2.InventorySerialization();
             SolidBlockManager = new de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R2.SolidBlockManager();
         } else {
             log.severe("[DeathChest] This server version is not supported (" + Helper.ServerVersion() + ")");
