@@ -161,6 +161,7 @@ public class Main extends JavaPlugin {
         SpawnTombstonesOnNonSolid = getConfig().getBoolean("spawn-tombstones-on-non-solid-blocks");
         SpawnChestIfNotAbleToPlaceTombstone = getConfig().getBoolean("spawn-chest-if-tombstone-cant-be-placed");
         DisableKillChests = getConfig().getBoolean("disable-killchests");
+        HomeChestOnlyActiveWhitelistedWorlds = getConfig().getBoolean("home-chest-only-active-in-whitelisted-worlds");
         playerData = new PlayerData(this);
         languageConfig = new LanguageConfig(this);
         playerData.saveDefaultPlayerConfig();
