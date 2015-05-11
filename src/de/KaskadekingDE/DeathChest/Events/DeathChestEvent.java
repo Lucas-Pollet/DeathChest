@@ -109,7 +109,7 @@ public class DeathChestEvent implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent e) {
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.SIGN_POST) {
             Player p = e.getPlayer();
@@ -132,7 +132,7 @@ public class DeathChestEvent implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onInventoryOpen(InventoryOpenEvent e) {
         Player p = (Player) e.getPlayer();
         if (suppressEvent.containsKey(p)) {

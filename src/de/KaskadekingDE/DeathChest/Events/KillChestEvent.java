@@ -154,7 +154,7 @@ public class KillChestEvent implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onInventoryClose(InventoryCloseEvent e) {
         InventoryHolder ih = e.getInventory().getHolder();
         Player p = (Player) e.getPlayer();

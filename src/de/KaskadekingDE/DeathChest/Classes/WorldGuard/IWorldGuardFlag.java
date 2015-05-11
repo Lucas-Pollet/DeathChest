@@ -5,7 +5,9 @@ import org.bukkit.World;
 
 public interface IWorldGuardFlag {
 
-    public void InitWgp();
-    public boolean canPlaceInRegion(World w, Location loc);
+    //public boolean allowOpen = false;
 
+    public void InitWgp();
+    //public boolean canOpenInRegion(World w, Location loc);
+    public boolean canPlaceInRegion(World w, Location loc);
 }

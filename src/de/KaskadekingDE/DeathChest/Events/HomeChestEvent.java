@@ -127,7 +127,7 @@ public class HomeChestEvent implements Listener {
         return true;
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onDeath(PlayerDeathEvent e) {
         Player p = e.getEntity();
         if(p.hasPermission("deathchest.place.home")) {

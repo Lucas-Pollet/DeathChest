@@ -63,6 +63,7 @@ public class Main extends JavaPlugin {
     public static boolean SpawnChestIfNotAbleToPlaceTombstone;
     public static boolean DisableKillChests;
     public static boolean HomeChestOnlyActiveWhitelistedWorlds;
+    public static boolean SneakOpenLoot;
 
     public static IWorldGuardFlag WorldGuardManager;
 
@@ -143,6 +144,7 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("show-coords", false);
         getConfig().addDefault("home-chest-only-active-in-whitelisted-worlds", false);
         getConfig().addDefault("allow-home-chests-in-all-worlds", false);
+        getConfig().addDefault("fast-loot", false);
         getConfig().addDefault("use-tombstones", false);
         getConfig().addDefault("spawn-tombstones-on-non-solid-blocks", false);
         getConfig().addDefault("spawn-chest-if-tombstone-cant-be-placed", false);
@@ -162,6 +164,7 @@ public class Main extends JavaPlugin {
         SpawnChestIfNotAbleToPlaceTombstone = getConfig().getBoolean("spawn-chest-if-tombstone-cant-be-placed");
         DisableKillChests = getConfig().getBoolean("disable-killchests");
         HomeChestOnlyActiveWhitelistedWorlds = getConfig().getBoolean("home-chest-only-active-in-whitelisted-worlds");
+        SneakOpenLoot = getConfig().getBoolean("fast-loot");
         playerData = new PlayerData(this);
         languageConfig = new LanguageConfig(this);
         playerData.saveDefaultPlayerConfig();

@@ -9,16 +9,18 @@ import de.KaskadekingDE.DeathChest.Main;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Iterator;
-import java.util.List;
 
 public class ChestProtector implements Listener {
 
@@ -41,6 +43,31 @@ public class ChestProtector implements Listener {
                     e.setCancelled(true);
                 }
 
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockInteract(PlayerInteractEvent e)  {
+        Player p = e.getPlayer();
+        if( e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.CHEST) {
+            if(p.isSneaking() && Main.SneakOpenLoot) {
+                Helper.ChestState state = Helper.GetChestType(e.getClickedBlock().getLocation());
+                switch(state) {
+                    case DeathChest:
+
+                        DeathChest dc = DeathChest.DeathChestByLocation(e.getClickedBlock().getLocation());
+                        if(dc.Owner.equals(p)) {
+                            for (ItemStack i : dc.DeathInventory.getContents())
+                            {
+                                if(i != null) {
+                                    p.getWorld().dropItemNaturally(p.getLocation(), i);
+                                }
+                            }
+                        }
+                        dc.RemoveChest(true);
+                        break;
+                }
             }
         }
     }
