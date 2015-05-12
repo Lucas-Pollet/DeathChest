@@ -124,6 +124,8 @@ public class HomeChestEvent implements Listener {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantSetHomeChestInWorld);
             return false;
         }
+        if(!Main.ProtectedRegionManager.checkAccess(p, loc))
+            return false;
         return true;
     }
 

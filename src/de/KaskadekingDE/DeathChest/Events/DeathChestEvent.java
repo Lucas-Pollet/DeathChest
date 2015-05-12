@@ -47,7 +47,7 @@ public class DeathChestEvent implements Listener {
         }
         if (p.hasPermission("deathchest.place.death")) {
             if (checkRequirements(p, e.getDrops())) {
-                loc = Helper.AvailableLocation(loc);
+                loc = Main.ProtectedRegionManager.searchValidLocation(p);
                 Inventory inv = null;
                 boolean spawnSign = true;
                 if (Main.UseTombstones) {
@@ -69,7 +69,7 @@ public class DeathChestEvent implements Listener {
                         Block block = loc.getBlock();
                         block.setType(Material.SIGN_POST);
                         Sign sign = (Sign) block.getState();
-                        DateFormat dateFormat = new SimpleDateFormat("dd.MM HH:mm:ss");
+                        DateFormat dateFormat = new SimpleDateFormat("MM.dd HH:mm:ss");
                         Date date = new Date();
                         String dateString = dateFormat.format(date);
                         String lineOne = LangStrings.LineOne.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.DeathChestInv).replace("%displayname", p.getDisplayName());
@@ -237,16 +237,11 @@ public class DeathChestEvent implements Listener {
         if (!worldAllowed) {
             return false;
         }
-        if(Main.WorldGuardManager != null && !Main.WorldGuardManager.canPlaceInRegion(loc.getWorld(), loc)) {
-            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-            return false;
-        }
         if (p.getLocation().getBlockY() < 0) {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
             return false;
         }
-        Location availableLocation = Helper.AvailableLocation(loc);
-        if(availableLocation == null) {
+        if(Main.ProtectedRegionManager.searchValidLocation(p) == null) {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
             return false;
         }

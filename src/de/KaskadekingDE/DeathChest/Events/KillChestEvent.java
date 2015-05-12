@@ -47,7 +47,7 @@ public class KillChestEvent implements Listener {
         Location loc = p.getLocation();
         if(killer.hasPermission("deathchest.place.kill") && !p.hasPermission("deathchest.protection.kill")) {
             if(checkRequirements(killer, loc, e.getDrops())) {
-                loc = Helper.AvailableLocation(loc);
+                loc = Main.ProtectedRegionManager.searchValidLocation(p);
                 Inventory inv = null;
                 boolean spawnSign = true;
                 if (Main.UseTombstones) {
@@ -69,7 +69,7 @@ public class KillChestEvent implements Listener {
                         Block block = loc.getBlock();
                         block.setType(Material.SIGN_POST);
                         Sign sign = (Sign) block;
-                        DateFormat dateFormat = new SimpleDateFormat("dd.MM HH:mm:ss");
+                        DateFormat dateFormat = new SimpleDateFormat("MM.dd HH:mm:ss");
                         Date date = new Date();
                         String dateString = dateFormat.format(date);
                         String lineOne = LangStrings.LineOne.replace("%player", p.getName()).replace("%date", dateString).replace("%chest", LangStrings.KillChestInv);
@@ -220,25 +220,14 @@ public class KillChestEvent implements Listener {
         if(!worldAllowed) {
             return false;
         }
-        if(Main.WorldGuardManager != null && !Main.WorldGuardManager.canPlaceInRegion(deathLoc.getWorld(), deathLoc)) {
-            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
-            return false;
-        }
         if(deathLoc.getBlockY() < 0) {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
             return false;
         }
-        Location availableLocation = Helper.AvailableLocation(deathLoc);
+        Location availableLocation = Main.ProtectedRegionManager.searchValidLocation(p);
         if(availableLocation == null) {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
             return false;
-        }
-        if(Main.UseTombstones) {
-            Location blockUnderSign = deathLoc.add(0.0, -1.0, 0.0);
-            if(!Main.SolidBlockManager.IsSolid(blockUnderSign)) {
-                p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingKillChest.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
-                return false;
-            }
         }
         return true;
     }

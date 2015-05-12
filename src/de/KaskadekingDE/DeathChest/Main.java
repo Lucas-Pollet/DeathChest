@@ -8,6 +8,7 @@ import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
 import de.KaskadekingDE.DeathChest.Classes.PacketManagement.IProtocolManager;
+import de.KaskadekingDE.DeathChest.Classes.ProtectedRegionManager;
 import de.KaskadekingDE.DeathChest.Classes.Serialization.ISerialization;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.IBlockManager;
@@ -45,6 +46,8 @@ public class Main extends JavaPlugin {
     public static IProtocolManager ProtocolManager;
     public static IBlockManager SolidBlockManager;
 
+    public static ProtectedRegionManager ProtectedRegionManager;
+
     // Player-Data & Language
     public static PlayerData playerData;
     public static LanguageConfig languageConfig;
@@ -64,6 +67,7 @@ public class Main extends JavaPlugin {
     public static boolean DisableKillChests;
     public static boolean HomeChestOnlyActiveWhitelistedWorlds;
     public static boolean SneakOpenLoot;
+    public static int Radius;
 
     public static IWorldGuardFlag WorldGuardManager;
 
@@ -93,6 +97,7 @@ public class Main extends JavaPlugin {
         if(ProtocolManager != null) {
             ProtocolManager.RegisterEvents();
         }
+        ProtectedRegionManager = new ProtectedRegionManager();
         log.info("[DeathChest] DeathChest v" + pdf.getVersion() + " by KaskadekingDE has been enabled!");
     }
 
@@ -148,6 +153,7 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("use-tombstones", false);
         getConfig().addDefault("spawn-tombstones-on-non-solid-blocks", false);
         getConfig().addDefault("spawn-chest-if-tombstone-cant-be-placed", false);
+        getConfig().addDefault("search-radius-for-protected-regions", 50);
         getConfig().addDefault("allowed-blocks", Arrays.asList(defaultList));
         getConfig().addDefault("allowed-worlds", Arrays.asList(defaultWorlds));
         getConfig().options().copyDefaults(true);
@@ -165,6 +171,7 @@ public class Main extends JavaPlugin {
         DisableKillChests = getConfig().getBoolean("disable-killchests");
         HomeChestOnlyActiveWhitelistedWorlds = getConfig().getBoolean("home-chest-only-active-in-whitelisted-worlds");
         SneakOpenLoot = getConfig().getBoolean("fast-loot");
+        Radius = getConfig().getInt("search-radius-for-protected-regions");
         playerData = new PlayerData(this);
         languageConfig = new LanguageConfig(this);
         playerData.saveDefaultPlayerConfig();
