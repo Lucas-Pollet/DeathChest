@@ -10,7 +10,6 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
-import org.bukkit.block.Sign;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -129,6 +128,9 @@ public class Helper {
                     placeChest = true;
                     break;
                 }
+            }
+            if(Main.WorldGuardManager != null && !Main.WorldGuardManager.canPlaceInRegion(loc.getWorld(), loc)) {
+                placeChest = false;
             }
             if(placeChest) {
                 return new Location(currentLoc.getWorld(), currentLoc.getBlockX(), currentLoc.getBlockY(), currentLoc.getBlockZ());
