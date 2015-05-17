@@ -36,18 +36,18 @@ import java.util.List;
 public class DeathChestEvent implements Listener {
 
     public static HashMap<Player, Inventory> suppressEvent = new HashMap<Player, Inventory>();
+    public static HashMap<Player, Location> chestSpawnLocation = new HashMap<Player, Location>();
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerDeath(PlayerDeathEvent e) {
         Player p = e.getEntity();
-        Location loc = p.getLocation();
         if (!Main.DisableKillChests && p.getKiller() != null && p.getKiller().hasPermission("deathchest.place.kill") && !p.hasPermission("deathchest.protection.kill")) {
             // Let do killer chest to the work
             return;
         }
         if (p.hasPermission("deathchest.place.death")) {
             if (checkRequirements(p, e.getDrops())) {
-                loc = Main.ProtectedRegionManager.searchValidLocation(p);
+                Location loc = chestSpawnLocation.get(p);
                 Inventory inv = null;
                 boolean spawnSign = true;
                 if (Main.UseTombstones) {
@@ -96,6 +96,7 @@ public class DeathChestEvent implements Listener {
                 e.getDrops().clear();
                 DeathChest chest = new DeathChest(p, loc, inv);
                 chest.SaveDeathChest();
+                chestSpawnLocation.remove(p);
                 if (Main.ShowCoords) {
                     p.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestWithCoords.replace("%x", Integer.toString(loc.getBlockX())).replace("%y", Integer.toString(loc.getBlockY())).replace("%z", Integer.toString(loc.getBlockZ())).replace("%world", loc.getWorld().getName()));
                 } else {
@@ -109,8 +110,9 @@ public class DeathChestEvent implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent e) {
+
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.SIGN_POST) {
             Player p = e.getPlayer();
             Location loc = e.getClickedBlock().getLocation();
@@ -128,16 +130,29 @@ public class DeathChestEvent implements Listener {
             if (Main.HookedPacketListener) {
                 Main.ProtocolManager.SendChestOpenPacket(dc.ChestLocation, p);
             }
+            e.setCancelled(false);
             p.openInventory(dc.DeathInventory);
+        } else if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.CHEST) {
+            Player p = e.getPlayer();
+            Location loc = e.getClickedBlock().getLocation();
+            DeathChest dc = DeathChest.DeathChestByLocation(loc);
+            if (dc == null) {
+                return;
+            }
+            if (!dc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {;
+                return;
+            }
+            e.setCancelled(false);
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInventoryOpen(InventoryOpenEvent e) {
         Player p = (Player) e.getPlayer();
         if (suppressEvent.containsKey(p)) {
             Inventory inv = suppressEvent.get(p);
             if (inv.equals(e.getInventory())) {
+                e.setCancelled(false);
                 suppressEvent.remove(p);
                 return;
             }
@@ -157,12 +172,12 @@ public class DeathChestEvent implements Listener {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.ThisChestBelongsTo.replace("%owner", dc.Owner.getName()));
             }
 
-            e.setCancelled(true);
             suppressEvent.put(p, dc.DeathInventory);
             if (Main.HookedPacketListener) {
                 AnimationManager.Create(p, dc.ChestLocation);
                 Main.ProtocolManager.SendChestOpenPacket(dc.ChestLocation, p);
             }
+            e.setCancelled(true);
             p.openInventory(dc.DeathInventory);
         }
     }
@@ -241,10 +256,24 @@ public class DeathChestEvent implements Listener {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
             return false;
         }
-        if(Main.ProtectedRegionManager.searchValidLocation(p) == null) {
-            p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-            return false;
+        if(Main.SpawnOutside) {
+            Location chestLoc = Main.ProtectedRegionManager.searchValidLocation(p, loc);
+            if(chestLoc == null) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+                return false;
+            } else {
+                chestSpawnLocation.put(p, chestLoc);
+            }
+        } else {
+            Location chestLoc = Helper.AvailableLocation(loc);
+            if(chestLoc == null) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+                 return false;
+            } else {
+                chestSpawnLocation.put(p, chestLoc);
+            }
         }
+
         return true;
     }
 }

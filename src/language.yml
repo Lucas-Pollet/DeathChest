@@ -28,7 +28,8 @@ reached-maximum-chests: '&cCouldn''t place a %type because you reached the maxiu
 failed-to-place-death-chest: '&cCouldn''t create a %type at your location!'
 failed-to-place-kill-chest: '&cCouldn''t create a %type at your victims location!'
 cant-place-chests-near-death-chests: '&cYou can''t place chests near %types!'
-not-allowed-to-break: '&cYou''re not allowed to break %types from other players!'
+not-allowed-to-break: '&cYou''re not allowed to break %types!'
+not-allowed-to-break-from-players: '&cYou''re not allowed to break %types from other players!'
 too-few-or-too-many-arguments: '&cToo few or too many arguments. Type /dchest help to see the usage of the command.'
 # Death-Chests
 death-chest-placed: '&aPlaced a death chest at your death location.'

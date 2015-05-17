@@ -23,7 +23,6 @@ public class ProtectedRegionManager {
         Initialize();
     }
 
-
     private boolean wgEnabled() {
         Plugin wg = Bukkit.getPluginManager().getPlugin("WorldGuard");
         if(wg != null && wg.isEnabled()) {
@@ -69,6 +68,9 @@ public class ProtectedRegionManager {
         Claim claim = GriefPrevention.instance.dataStore.getClaimAt(loc, false, null);
         if(claim != null) {
             String errorMessage = claim.allowContainers(p);
+            if(errorMessage != null && !Main.SpawnOutside) {
+                errorMessage = null;
+            }
             if(errorMessage != null)
                 return false;
         }
@@ -84,8 +86,8 @@ public class ProtectedRegionManager {
         return true;
     }
 
-    public Location searchValidLocation(Player p) {
-        Location loc = NormalizeLocation(p.getLocation());
+    public Location searchValidLocation(Player p, Location chestLoc) {
+        Location loc = NormalizeLocation(chestLoc);
 
         if(checkAccess(p, loc))
             return loc;
@@ -99,10 +101,10 @@ public class ProtectedRegionManager {
                 for(int z = 0; z < Main.Radius; z++) {
                     loc = new Location(w, locX + x, locY + y, locZ + z);
                     if(checkAccess(p, loc))
-                       return loc;
+                        return loc;
                     loc = new Location(w, locX - x, locY + y, locZ - z);
                     if(checkAccess(p, loc))
-                       return loc;loc = new Location(w, locX - x, locY + y, locZ + z);
+                        return loc;loc = new Location(w, locX - x, locY + y, locZ + z);
                     if(checkAccess(p, loc))
                         return loc;
                     loc = new Location(w, locX + x, locY + y, locZ - z);
@@ -116,14 +118,10 @@ public class ProtectedRegionManager {
 
     public boolean checkAccess(Player p, Location loc) {
         Material mat = Main.UseTombstones ? Material.SIGN_POST : Material.CHEST;
-        if(!gpClaimAccess(p, loc)) {
-            System.out.println("gpClaimAccess");
+        if(!gpClaimAccess(p, loc))
             return false;
-        }
-        if(!wgRegionAccess(p, loc, mat)) {
-            System.out.println("wgClaimAccess");
+        if(!wgRegionAccess(p, loc, mat))
             return false;
-        }
         if(!townyAccess(p, loc, mat))
             return false;
         if(Helper.AvailableLocation(loc) == null)

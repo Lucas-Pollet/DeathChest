@@ -31,8 +31,8 @@ public class LangStrings {
     public static String FailedPlacingDeathChest;
     public static String FailedPlacingKillChest;
     public static String CantPlaceChestInNear;
-    public static String NotAllowedToBreak;
     public static String TooManyOrTooFewArguments;
+    public static String NotAllowedToBreakFromOtherPlayers;
 
     public static String DeathChestPlaced;
     public static String DeathChestWithCoords;
@@ -76,5 +76,7 @@ public class LangStrings {
     public static String LineTwo;
     public static String LineThree;
     public static String LineFour;
+
+    public static String NotAllowedToBreak;
 
 }

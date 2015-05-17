@@ -36,7 +36,7 @@ public class HomeChestEvent implements Listener {
     public static List<Player> setHome = new ArrayList<Player>();
     public static HashMap<Player, Inventory> suppressEvent = new HashMap<Player, Inventory>();
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInteract(PlayerInteractEvent e) {
         Player p = e.getPlayer();
         if(setHome.contains(p)) {
@@ -132,6 +132,8 @@ public class HomeChestEvent implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onDeath(PlayerDeathEvent e) {
         Player p = e.getEntity();
+        if(p.getKiller() != null && !p.hasPermission("deathchest.protection.kill"))
+            return;
         if(p.hasPermission("deathchest.place.home")) {
             HomeChest hc = HomeChest.HomeChestByPlayer(p);
             if(hc != null && !hc.IsFull()) {
@@ -181,6 +183,7 @@ public class HomeChestEvent implements Listener {
             Inventory inv = suppressEvent.get(p);
             if(inv.equals(e.getInventory())) {
                 suppressEvent.remove(p);
+                e.setCancelled(false);
                 return;
             }
         }
@@ -199,12 +202,13 @@ public class HomeChestEvent implements Listener {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.ThisChestBelongsTo.replace("%owner", hc.Owner.getName()));
             }
 
-            e.setCancelled(true);
+
             suppressEvent.put(p, hc.HomeInventory);
             if(Main.HookedPacketListener) {
                 AnimationManager.Create(p, hc.ChestLocation);
                 Main.ProtocolManager.SendChestOpenPacket(hc.ChestLocation, p);
             }
+            e.setCancelled(true);
             p.openInventory(hc.HomeInventory);
         }
     }

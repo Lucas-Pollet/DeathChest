@@ -40,9 +40,8 @@ public class DeathChestWGFlag implements IWorldGuardFlag {
     private WorldGuardPlugin getWorldGuard() {
         Plugin plugin = Main.plugin.getServer().getPluginManager().getPlugin("WorldGuard");
 
-        // WorldGuard may not be loaded
         if (plugin == null || !(plugin instanceof WorldGuardPlugin)) {
-            return null; // Maybe you want throw an exception instead
+            return null;
         }
 
         return (WorldGuardPlugin) plugin;

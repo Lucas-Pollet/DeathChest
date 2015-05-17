@@ -53,6 +53,7 @@ public class Main extends JavaPlugin {
     public static LanguageConfig languageConfig;
 
     // Config-Options
+    public static boolean AllowBreaking;
     public static List<String> AllowedBlocks;
     public static List<String> AllowedWorlds;
     public static int MaximumDeathChests;
@@ -65,6 +66,7 @@ public class Main extends JavaPlugin {
     public static boolean SpawnTombstonesOnNonSolid;
     public static boolean SpawnChestIfNotAbleToPlaceTombstone;
     public static boolean DisableKillChests;
+    public static boolean SpawnOutside;
     public static boolean HomeChestOnlyActiveWhitelistedWorlds;
     public static boolean SneakOpenLoot;
     public static int Radius;
@@ -142,6 +144,7 @@ public class Main extends JavaPlugin {
     public void LoadConfig() {
         String[] defaultList = {"AIR", "STONE", "DEAD_BUSH", "LEAVES", "RED_ROSE", "YELLOW_FLOWER", "VINE", "LONG_GRASS", "TALL_GRASS"};
         String[] defaultWorlds = {"world"};
+        getConfig().addDefault("allow-breaking-chests", true);
         getConfig().addDefault("maximum-deathchests", 3);
         getConfig().addDefault("maximum-killchests", 2);
         getConfig().addDefault("disable-killchests", false);
@@ -153,11 +156,13 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("use-tombstones", false);
         getConfig().addDefault("spawn-tombstones-on-non-solid-blocks", false);
         getConfig().addDefault("spawn-chest-if-tombstone-cant-be-placed", false);
+        getConfig().addDefault("spawn-chest-outside-protected-regions", false);
         getConfig().addDefault("search-radius-for-protected-regions", 50);
         getConfig().addDefault("allowed-blocks", Arrays.asList(defaultList));
         getConfig().addDefault("allowed-worlds", Arrays.asList(defaultWorlds));
         getConfig().options().copyDefaults(true);
         saveConfig();
+        AllowBreaking = getConfig().getBoolean("allow-breaking-chests");
         MaximumDeathChests = getConfig().getInt("maximum-deathchests");
         MaximumKillChests = getConfig().getInt("maximum-killchests");
         SecondsToRemove = getConfig().getInt("remove-chest-after-x-seconds");
@@ -171,6 +176,7 @@ public class Main extends JavaPlugin {
         DisableKillChests = getConfig().getBoolean("disable-killchests");
         HomeChestOnlyActiveWhitelistedWorlds = getConfig().getBoolean("home-chest-only-active-in-whitelisted-worlds");
         SneakOpenLoot = getConfig().getBoolean("fast-loot");
+        SpawnOutside = getConfig().getBoolean("spawn-chest-outside-protected-regions");
         Radius = getConfig().getInt("search-radius-for-protected-regions");
         playerData = new PlayerData(this);
         languageConfig = new LanguageConfig(this);
@@ -452,6 +458,7 @@ public class Main extends JavaPlugin {
         LangStrings.LineTwo = languageConfig.getLanguageConfig().getString("line-two").replace('&', '§');
         LangStrings.LineThree = languageConfig.getLanguageConfig().getString("line-three").replace('&', '§');
         LangStrings.LineFour = languageConfig.getLanguageConfig().getString("line-four").replace('&', '§');
+        LangStrings.NotAllowedToBreakFromOtherPlayers = languageConfig.getLanguageConfig().getString("not-allowed-to-break-from-players").replace('&', '§');
         if(UseTombstones) {
             LangStrings.ActiveType = LangStrings.TypeTombstone;
         } else {
