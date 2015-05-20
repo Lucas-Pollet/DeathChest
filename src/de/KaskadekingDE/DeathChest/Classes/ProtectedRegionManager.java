@@ -1,5 +1,7 @@
 package de.KaskadekingDE.DeathChest.Classes;
 
+import com.intellectualcrafters.plot.api.PlotAPI;
+import com.intellectualcrafters.plot.object.Plot;
 import com.palmergames.bukkit.towny.object.TownyPermission;
 import com.palmergames.bukkit.towny.utils.PlayerCacheUtil;
 import com.sk89q.worldguard.bukkit.WGBukkit;
@@ -13,11 +15,22 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.util.HashMap;
+import java.util.List;
+
 public class ProtectedRegionManager {
+
+    public enum PlotSquaredType {
+        NotLoaded,
+        HasAccess,
+        IsAdded,
+        NoAccess,
+    }
 
     public boolean HookedWorldGuard;
     public boolean HookedGriefPrevention;
     public boolean HookedTowny;
+    public boolean HookedPlotSquared;
 
     public ProtectedRegionManager() {
         Initialize();
@@ -26,6 +39,14 @@ public class ProtectedRegionManager {
     private boolean wgEnabled() {
         Plugin wg = Bukkit.getPluginManager().getPlugin("WorldGuard");
         if(wg != null && wg.isEnabled()) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean psEnabled() {
+        Plugin ps = Bukkit.getPluginManager().getPlugin("PlotSquared");
+        if(ps != null && ps.isEnabled()) {
             return true;
         }
         return false;
@@ -51,6 +72,7 @@ public class ProtectedRegionManager {
         HookedWorldGuard = wgEnabled();
         HookedGriefPrevention = gpEnabled();
         HookedTowny = townyEnabled();
+        HookedPlotSquared = psEnabled();
     }
 
     public boolean wgRegionAccess(Player p, Location loc, Material type) {
@@ -60,6 +82,20 @@ public class ProtectedRegionManager {
             return false;
         }
         return true;
+    }
+
+    public PlotSquaredType psPlotAccess(Player p, Location loc) {
+        if(!HookedPlotSquared || !psEnabled())
+            return PlotSquaredType.NotLoaded; // PlotSquared not enabled
+        PlotAPI api = new PlotAPI();
+        Plot currentPlot = api.getPlot(loc);
+        if(currentPlot != null) {
+            if(currentPlot.isOwner(p.getUniqueId()) || currentPlot.isAdded(p.getUniqueId()) && !currentPlot.isDenied(p.getUniqueId())) {
+                return PlotSquaredType.IsAdded; // Can use
+            }
+            return PlotSquaredType.NoAccess; // Cannot use
+        }
+        return PlotSquaredType.HasAccess; // No plot
     }
 
     public boolean gpClaimAccess(Player p, Location loc) {
@@ -88,9 +124,10 @@ public class ProtectedRegionManager {
 
     public Location searchValidLocation(Player p, Location chestLoc) {
         Location loc = NormalizeLocation(chestLoc);
-
-        if(checkAccess(p, loc))
+        if(checkAccess(p, loc)) {
+            loc = GetSafePlotSquaredLocation(p, loc);
             return loc;
+        }
         World w = loc.getWorld();
         int locX = loc.getBlockX();
         int locY = loc.getBlockY();
@@ -100,23 +137,47 @@ public class ProtectedRegionManager {
             for(int x = 0; y < Main.Radius; x++) {
                 for(int z = 0; z < Main.Radius; z++) {
                     loc = new Location(w, locX + x, locY + y, locZ + z);
-                    if(checkAccess(p, loc))
+                    if(checkAccess(p, loc)) {
+                        loc = GetSafePlotSquaredLocation(p, loc);
                         return loc;
+                    }
                     loc = new Location(w, locX - x, locY + y, locZ - z);
-                    if(checkAccess(p, loc))
-                        return loc;loc = new Location(w, locX - x, locY + y, locZ + z);
-                    if(checkAccess(p, loc))
+                    if(checkAccess(p, loc)) {
+                        loc = GetSafePlotSquaredLocation(p, loc);
                         return loc;
+                    }
+                    loc = new Location(w, locX - x, locY + y, locZ + z);
+                    if(checkAccess(p, loc)) {
+                        loc = GetSafePlotSquaredLocation(p, loc);
+                        return loc;
+                    }
                     loc = new Location(w, locX + x, locY + y, locZ - z);
-                    if(checkAccess(p, loc))
+                    if(checkAccess(p, loc)) {
+                        loc = GetSafePlotSquaredLocation(p, loc);
                         return loc;
+                    }
                 }
             }
         }
         return null;
     }
 
+    private Location GetSafePlotSquaredLocation(Player p, Location loc) {
+        if(plotSquaredNoAccess.get(loc) == PlotSquaredType.HasAccess) {
+            List<Location> locations = Helper.LocationsAround(loc);
+            for(Location loc2: locations) {
+                if(Helper.ValidLocation(loc2) && checkAccess(p, loc)) {
+                    return loc2;
+                }
+            }
+        }
+        return loc;
+    }
+
+    HashMap<Location, PlotSquaredType> plotSquaredNoAccess = new HashMap<Location, PlotSquaredType>();
+
     public boolean checkAccess(Player p, Location loc) {
+        plotSquaredNoAccess.clear();
         Material mat = Main.UseTombstones ? Material.SIGN_POST : Material.CHEST;
         if(!gpClaimAccess(p, loc))
             return false;
@@ -124,6 +185,12 @@ public class ProtectedRegionManager {
             return false;
         if(!townyAccess(p, loc, mat))
             return false;
+        PlotSquaredType type = psPlotAccess(p, loc);
+        plotSquaredNoAccess.put(loc, type);
+        switch(type) {
+            case NoAccess:
+                return false;
+        }
         if(Helper.AvailableLocation(loc) == null)
             return false;
         return true;

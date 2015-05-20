@@ -33,7 +33,7 @@ public class HomeChest {
     public static void CreateHomeChest(OfflinePlayer owner, Location loc, Inventory inv) { new HomeChest(owner, loc, inv); }
 
     public void SaveHomeChest() {
-        String base = Main.Serialization.toBase64(HomeInventory);
+        String base = Main.Serialization.Serialize(HomeInventory);
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".name", Owner.getName());
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".home-chest.x", ChestLocation.getBlockX());
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".home-chest.y", ChestLocation.getBlockY());

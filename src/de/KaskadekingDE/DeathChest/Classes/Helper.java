@@ -139,12 +139,45 @@ public class Helper {
         return null;
     }
 
+    public static boolean ValidLocation(Location currentLoc) {
+        boolean placeChest = false;
+        Material deathBlockMaterial = currentLoc.getBlock().getType();
+        for(String key: Main.AllowedBlocks) {
+            if(key.equalsIgnoreCase("*")) {
+                placeChest = true;
+                break;
+            }
+            Material allowedMat = Material.getMaterial(key);
+            if(allowedMat == deathBlockMaterial) {
+                placeChest = true;
+                break;
+            }
+        }
+        if(Main.WorldGuardManager != null && !Main.WorldGuardManager.canPlaceInRegion(currentLoc.getWorld(), currentLoc)) {
+            placeChest = false;
+        }
+        if(placeChest) {
+            return true;
+        }
+        return false;
+    }
+
     public static void MoveItemsToInventory(Inventory oldInv, Inventory newInv) {
         for(ItemStack item: oldInv.getContents()) {
             if(item != null) {
                 newInv.addItem(item);
             }
         }
+    }
+
+    public static Inventory InventoryFromItemStack(ItemStack[] stack)
+    {
+        Inventory result = Bukkit.createInventory(null, 54);
+        for(ItemStack item: stack) {
+            if(item != null)
+                result.addItem(item);
+        }
+        return result;
     }
 
 }

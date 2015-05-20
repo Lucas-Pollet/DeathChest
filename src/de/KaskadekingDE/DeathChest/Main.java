@@ -9,7 +9,7 @@ import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
 import de.KaskadekingDE.DeathChest.Classes.PacketManagement.IProtocolManager;
 import de.KaskadekingDE.DeathChest.Classes.ProtectedRegionManager;
-import de.KaskadekingDE.DeathChest.Classes.Serialization.ISerialization;
+import de.KaskadekingDE.DeathChest.Classes.Serialization.InventorySerialization;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.IBlockManager;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.TaskScheduler;
@@ -42,7 +42,7 @@ public class Main extends JavaPlugin {
     public static Main plugin;
     public final static Logger log = Logger.getLogger("Minecraft");
 
-    public static ISerialization Serialization;
+    public static InventorySerialization Serialization;
     public static IProtocolManager ProtocolManager;
     public static IBlockManager SolidBlockManager;
 
@@ -76,12 +76,13 @@ public class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         plugin = this;
+        Serialization = new InventorySerialization();
         if(Helper.ServerVersion().startsWith("v1_8_R1")) {
-            Serialization = new de.KaskadekingDE.DeathChest.Classes.Serialization.v1_8_R1.InventorySerialization();
             SolidBlockManager = new de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R1.SolidBlockManager();
         } else if(Helper.ServerVersion().startsWith("v1_8_R2")) {
-            Serialization = new de.KaskadekingDE.DeathChest.Classes.Serialization.v1_8_R2.InventorySerialization();
             SolidBlockManager = new de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R2.SolidBlockManager();
+        } else if(Helper.ServerVersion().startsWith("v1_8_R3")) {
+            SolidBlockManager = new de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.v1_8_R3.SolidBlockManager();
         } else {
             log.severe("[DeathChest] This server version is not supported (" + Helper.ServerVersion() + ")");
             Bukkit.getPluginManager().disablePlugin(this);
@@ -130,6 +131,10 @@ public class Main extends JavaPlugin {
                 HookedPacketListener = true;
             } else if(Helper.ServerVersion().startsWith("v1_8_R2")) {
                 ProtocolManager = new de.KaskadekingDE.DeathChest.Classes.PacketManagement.v1_8_R2.ProtocolManager();
+                log.info("[DeathChest] Hooked into PacketListenerApi");
+                HookedPacketListener = true;
+            } else if(Helper.ServerVersion().startsWith("v1_8_R3")) {
+                ProtocolManager = new de.KaskadekingDE.DeathChest.Classes.PacketManagement.v1_8_R3.ProtocolManager();
                 log.info("[DeathChest] Hooked into PacketListenerApi");
                 HookedPacketListener = true;
             } else {
@@ -219,7 +224,8 @@ public class Main extends JavaPlugin {
                             Location loc = new Location(w, x, y, z);
                             Inventory inv;
                             if(base != null) {
-                                Inventory baseInv = Serialization.fromBase64(base);
+                                Inventory baseInv;
+                                baseInv = Serialization.Deserialize(base);
                                 BlockState bs = loc.getBlock().getState();
                                 if(bs instanceof Chest) {
                                     Chest ch = (Chest) bs;
@@ -286,7 +292,8 @@ public class Main extends JavaPlugin {
                             Location loc = new Location(w, x, y, z);
                             Inventory inv;
                             if(base != null) {
-                                Inventory baseInv = Serialization.fromBase64(base);
+                                Inventory baseInv;
+                                baseInv = Serialization.Deserialize(base);
                                 BlockState bs = loc.getBlock().getState();
                                 if(bs instanceof Chest) {
                                     Chest ch = (Chest) bs;
@@ -357,7 +364,8 @@ public class Main extends JavaPlugin {
                         Location loc = new Location(w, x, y, z);
                         Inventory inv;
                         if(base != null) {
-                            Inventory baseInv = Serialization.fromBase64(base);
+                            Inventory baseInv;
+                            baseInv = Serialization.Deserialize(base);
                             BlockState bs = loc.getBlock().getState();
                             if(bs instanceof Chest) {
                                 Chest ch = (Chest) bs;

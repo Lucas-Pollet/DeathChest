@@ -1,0 +1,2 @@
+JSON Serialization by olivervscreeper from NetworkUtilities
+https://github.com/olivervscreeper/NetworkUtilities

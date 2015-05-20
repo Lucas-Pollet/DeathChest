@@ -1,8 +1,8 @@
 name: DeathChest
 description: Creates a chest with all drops when you die.
 author: KaskadekingDE
-version: 2.6
-softdepend: [PacketListenerApi,WorldGuard,GriefPrevention,Towny]
+version: 2.7
+softdepend: [PacketListenerApi,WorldGuard,GriefPrevention,Towny,PlotSquared]
 main: de.KaskadekingDE.DeathChest.Main
 
 commands:

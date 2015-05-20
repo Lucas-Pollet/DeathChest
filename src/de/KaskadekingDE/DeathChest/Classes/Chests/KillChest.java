@@ -49,7 +49,7 @@ public class KillChest implements Comparable<KillChest>{
         if(nextId == -1) {
             nextId = NextAvailableId(Owner);
         }
-        String base = Main.Serialization.toBase64(DeathInventory);
+        String base = Main.Serialization.Serialize(DeathInventory);
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".name", Owner.getName());
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".kill-chests." + nextId + ".x", ChestLocation.getBlockX());
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".kill-chests." + nextId + ".y", ChestLocation.getBlockY());

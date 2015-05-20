@@ -112,7 +112,6 @@ public class DeathChestEvent implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent e) {
-
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.SIGN_POST) {
             Player p = e.getPlayer();
             Location loc = e.getClickedBlock().getLocation();
@@ -139,7 +138,7 @@ public class DeathChestEvent implements Listener {
             if (dc == null) {
                 return;
             }
-            if (!dc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {;
+            if (!dc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
                 return;
             }
             e.setCancelled(false);
