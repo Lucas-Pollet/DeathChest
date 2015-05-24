@@ -67,8 +67,8 @@ public class ChestProtector implements Listener {
                                     p.getWorld().dropItemNaturally(p.getLocation(), i);
                                 }
                             }
+                            dc.RemoveChest(true);
                         }
-                        dc.RemoveChest(true);
                         break;
                 }
             } else {
