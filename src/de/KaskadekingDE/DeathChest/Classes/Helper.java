@@ -129,6 +129,9 @@ public class Helper {
                     break;
                 }
             }
+            if(ChestNearLocation(currentLoc) != null) {
+                placeChest = false;
+            }
             if(Main.WorldGuardManager != null && !Main.WorldGuardManager.canPlaceInRegion(loc.getWorld(), loc)) {
                 placeChest = false;
             }
