@@ -4,6 +4,7 @@ import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
+import de.KaskadekingDE.DeathChest.Classes.PermissionManager;
 import de.KaskadekingDE.DeathChest.Events.HomeChestEvent;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import de.KaskadekingDE.DeathChest.Main;
@@ -13,6 +14,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.Permission;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +29,7 @@ public class DeathChestCommand implements CommandExecutor {
             return true;
         }
         if(args[0].equalsIgnoreCase("help")) {
-            if(!cs.hasPermission("deathchest.help")) {
+            if(!PermissionManager.PlayerHasPermission(cs, PermissionManager.HELP_PERMISSION, false)) {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                 return true;
             }
@@ -39,7 +41,7 @@ public class DeathChestCommand implements CommandExecutor {
             cs.sendMessage("§e/dchest remove <id> [death/kill/home] [player] §7- §aRemoves a death chest from the config & memory.");
             return true;
         } else if(args[0].equalsIgnoreCase("reload")) {
-            if(!cs.hasPermission("deathchest.reload")) {
+            if(!PermissionManager.PlayerHasPermission(cs, PermissionManager.RELOAD_PERMISSION, false)) {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                 return true;
             }
@@ -56,7 +58,7 @@ public class DeathChestCommand implements CommandExecutor {
                 return true;
             }
             Player p = (Player) cs;
-            if(!p.hasPermission("deathchest.place.home")) {
+            if(!PermissionManager.PlayerHasPermission(p, PermissionManager.HOME_PERMISSION, false)) {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                 return true;
             }
@@ -73,7 +75,7 @@ public class DeathChestCommand implements CommandExecutor {
                 if(!(cs instanceof Player)) {
                     cs.sendMessage(LangStrings.Prefix + " " + LangStrings.OnlyPlayers);
                     return true;
-                } else if(!cs.hasPermission("deathchest.locations")) {
+                } else if(!PermissionManager.PlayerHasPermission(cs, PermissionManager.LOCATIONS_PERMISSION, false)) {
                     cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                     return true;
                 }
@@ -117,7 +119,7 @@ public class DeathChestCommand implements CommandExecutor {
                     }
                 }
             } else if(args.length == 2) {
-                if(!cs.hasPermission("deathchest.locations.others")) {
+                if(!PermissionManager.PlayerHasPermission(cs, PermissionManager.LOCATIONS_OTHERS_PERMISSION, false)) {
                     cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                     return true;
                 }
@@ -179,7 +181,7 @@ public class DeathChestCommand implements CommandExecutor {
             if(!(cs instanceof Player)) {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.OnlyPlayers);
                 return true;
-            } else if(!cs.hasPermission("deathchest.remove")) {
+            } else if(!PermissionManager.PlayerHasPermission(cs, PermissionManager.REMOVE_PERMISSION, false)) {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                 return true;
             }
@@ -217,7 +219,7 @@ public class DeathChestCommand implements CommandExecutor {
             if(!(cs instanceof Player)) {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.OnlyPlayers);
                 return true;
-            } else if(!cs.hasPermission("deathchest.remove")) {
+            } else if(!PermissionManager.PlayerHasPermission(cs, PermissionManager.REMOVE_PERMISSION, false)) {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                 return true;
             }
@@ -274,7 +276,7 @@ public class DeathChestCommand implements CommandExecutor {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.InvalidType + " " + LangStrings.TryWithTypePlayer.replace("%id", id).replace("%player", playerName));
                 return true;
             }
-            if(!cs.hasPermission("deathchest.remove")) {
+            if(!PermissionManager.PlayerHasPermission(cs, PermissionManager.REMOVE_PERMISSION, false)) {
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
                 return true;
             }

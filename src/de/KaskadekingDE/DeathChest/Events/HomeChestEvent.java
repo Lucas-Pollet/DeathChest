@@ -2,6 +2,7 @@ package de.KaskadekingDE.DeathChest.Events;
 
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
+import de.KaskadekingDE.DeathChest.Classes.PermissionManager;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.Animation.AnimationManager;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import de.KaskadekingDE.DeathChest.Main;
@@ -25,6 +26,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.Permission;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -132,9 +134,9 @@ public class HomeChestEvent implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onDeath(PlayerDeathEvent e) {
         Player p = e.getEntity();
-        if(p.getKiller() != null && !p.hasPermission("deathchest.protection.kill"))
+        if(p.getKiller() != null && !PermissionManager.PlayerHasPermission(p, PermissionManager.KILL_PROTECTION, false))
             return;
-        if(p.hasPermission("deathchest.place.home")) {
+        if(PermissionManager.PlayerHasPermission(p, PermissionManager.DEATH_PERMISSION, false)) {
             HomeChest hc = HomeChest.HomeChestByPlayer(p);
             if(hc != null && !hc.IsFull()) {
                 String w = p.getWorld().getName();
@@ -194,11 +196,11 @@ public class HomeChestEvent implements Listener {
             if(hc == null) {
                 return;
             }
-            if(!hc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
+            if(!hc.EqualsOwner(p) && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest).replace("%owner", hc.Owner.getName()));
                 e.setCancelled(true);
                 return;
-            } else if(p.hasPermission("deathchest.protection.bypass") & !hc.EqualsOwner(p)) {
+            } else if(PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false) & !hc.EqualsOwner(p)) {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.ThisChestBelongsTo.replace("%owner", hc.Owner.getName()));
             }
 

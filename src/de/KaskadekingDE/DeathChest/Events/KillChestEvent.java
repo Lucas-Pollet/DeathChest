@@ -2,6 +2,7 @@ package de.KaskadekingDE.DeathChest.Events;
 
 import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
+import de.KaskadekingDE.DeathChest.Classes.PermissionManager;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.Animation.AnimationManager;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
@@ -25,6 +26,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.Permission;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -46,7 +48,7 @@ public class KillChestEvent implements Listener {
             return;
         }
         Location loc = p.getLocation();
-        if(killer.hasPermission("deathchest.place.kill") && !p.hasPermission("deathchest.protection.kill")) {
+        if(PermissionManager.PlayerHasPermission(killer, PermissionManager.KILLER_PERMISSION, false) && !PermissionManager.PlayerHasPermission(p, PermissionManager.KILL_PROTECTION, false)) {
             if(checkRequirements(killer, loc, e.getDrops())) {
                 loc = chestSpawnLocation.get(p);
                 Inventory inv = null;

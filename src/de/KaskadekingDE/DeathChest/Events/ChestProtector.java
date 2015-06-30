@@ -4,6 +4,7 @@ import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
+import de.KaskadekingDE.DeathChest.Classes.PermissionManager;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import de.KaskadekingDE.DeathChest.Main;
 import org.bukkit.Location;
@@ -19,8 +20,10 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.Permission;
 
 import java.util.Iterator;
+import java.util.List;
 
 public class ChestProtector implements Listener {
 
@@ -78,7 +81,7 @@ public class ChestProtector implements Listener {
                 switch(state) {
                     case DeathChest:
                         DeathChest dc = DeathChest.DeathChestByLocation(e.getClickedBlock().getLocation());
-                        if(!dc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
+                        if(!dc.EqualsOwner(p) && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
                             p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%owner", dc.Owner.getName()).replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
                             e.setCancelled(true);
                             return;
@@ -90,7 +93,7 @@ public class ChestProtector implements Listener {
                         break;
                     case HomeChest:
                         HomeChest hc = HomeChest.HomeChestByLocation(e.getClickedBlock().getLocation());
-                        if(!hc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
+                        if(!hc.EqualsOwner(p) && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
                             p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest).replace("%owner", hc.Owner.getName()));
                             e.setCancelled(true);
                             return;
@@ -116,7 +119,7 @@ public class ChestProtector implements Listener {
                     e.setCancelled(true);
                     return;
                 }
-                if(!dc.Owner.equals(e.getPlayer()) && !e.getPlayer().hasPermission("deathchest.protection.bypass")) {
+                if(!dc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
                     e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
                     e.setCancelled(true);
                 } else {
@@ -132,7 +135,7 @@ public class ChestProtector implements Listener {
                 }
             } else if(state == Helper.ChestState.HomeChest) {
                 HomeChest hc = HomeChest.HomeChestByLocation(loc);
-                if(!hc.Owner.equals(e.getPlayer()) && !e.getPlayer().hasPermission("deathchest.protection.bypass")) {
+                if(!hc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
                     e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest));
                     e.setCancelled(true);
                 } else {
@@ -167,7 +170,7 @@ public class ChestProtector implements Listener {
         } else if(Main.UseTombstones && block.getType() == Material.SIGN_POST) {
             if(state == Helper.ChestState.DeathChest) {
                 DeathChest dc = DeathChest.DeathChestByLocation(loc);
-                if(!dc.Owner.equals(e.getPlayer()) && !e.getPlayer().hasPermission("deathchest.protection.bypass")) {
+                if(!dc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
                     e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreakFromOtherPlayers.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
                     e.setCancelled(true);
                 } else {
@@ -189,7 +192,7 @@ public class ChestProtector implements Listener {
                 }
             } else if(state == Helper.ChestState.HomeChest) {
                 HomeChest hc = HomeChest.HomeChestByLocation(loc);
-                if(!hc.Owner.equals(e.getPlayer()) && !e.getPlayer().hasPermission("deathchest.protection.bypass")) {
+                if(!hc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
                     e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest));
                     e.setCancelled(true);
                 } else {
@@ -224,7 +227,7 @@ public class ChestProtector implements Listener {
                 Helper.ChestState signState = Helper.GetChestType(loc);
                 if(signState == Helper.ChestState.DeathChest ) {
                     DeathChest dc = DeathChest.DeathChestByLocation(loc);
-                    if(!dc.Owner.equals(e.getPlayer()) && !e.getPlayer().hasPermission("deathchest.protection.bypass")) {
+                    if(!dc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
                         e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
                         e.setCancelled(true);
                     } else {

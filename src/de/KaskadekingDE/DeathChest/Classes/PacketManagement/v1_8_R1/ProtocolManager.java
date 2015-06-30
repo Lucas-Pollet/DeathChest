@@ -4,6 +4,7 @@ import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
 import de.KaskadekingDE.DeathChest.Classes.PacketManagement.IProtocolManager;
+import de.KaskadekingDE.DeathChest.Classes.PermissionManager;
 import de.KaskadekingDE.DeathChest.Main;
 import de.inventivegames.packetlistener.PacketListenerAPI;
 import de.inventivegames.packetlistener.handler.PacketHandler;
@@ -17,6 +18,9 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.v1_8_R1.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+
+import java.util.List;
 
 public class ProtocolManager implements IProtocolManager {
 
@@ -41,14 +45,14 @@ public class ProtocolManager implements IProtocolManager {
                             if(state == Helper.ChestState.DeathChest) {
                                 DeathChest dc = DeathChest.DeathChestByLocation(loc);
                                 if(dc != null) {
-                                    if(!dc.Owner.equals(p) && !p.hasPermission("deathchest.protection.bypass")) {
+                                    if(!dc.Owner.equals(p) && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
                                         sentPacket.setCancelled(true);
                                     }
                                 }
                             } else if(state == Helper.ChestState.HomeChest) {
                                 HomeChest hc = HomeChest.HomeChestByLocation(loc);
                                 if(hc != null) {
-                                    if(!hc.Owner.equals(p) && !p.hasPermission("deathchest.protection.bypass")) {
+                                    if(!hc.Owner.equals(p) && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
                                         sentPacket.setCancelled(true);
                                     }
                                 }

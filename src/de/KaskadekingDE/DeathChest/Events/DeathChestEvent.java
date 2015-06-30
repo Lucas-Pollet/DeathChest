@@ -3,6 +3,7 @@ package de.KaskadekingDE.DeathChest.Events;
 import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
+import de.KaskadekingDE.DeathChest.Classes.PermissionManager;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.Animation.AnimationManager;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
@@ -26,6 +27,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.Permission;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -41,11 +43,11 @@ public class DeathChestEvent implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerDeath(PlayerDeathEvent e) {
         Player p = e.getEntity();
-        if (!Main.DisableKillChests && p.getKiller() != null && p.getKiller().hasPermission("deathchest.place.kill") && !p.hasPermission("deathchest.protection.kill")) {
+        if (!Main.DisableKillChests && p.getKiller() != null && PermissionManager.PlayerHasPermission(p.getKiller(), PermissionManager.KILLER_PERMISSION, false) && !PermissionManager.PlayerHasPermission(p, PermissionManager.KILL_PROTECTION, false)) {
             // Let do killer chest to the work
             return;
         }
-        if (p.hasPermission("deathchest.place.death")) {
+        if (PermissionManager.PlayerHasPermission(p, PermissionManager.DEATH_PERMISSION, false)) {
             if (checkRequirements(p, e.getDrops())) {
                 Location loc = chestSpawnLocation.get(p);
                 Inventory inv = null;
@@ -119,11 +121,11 @@ public class DeathChestEvent implements Listener {
             if (dc == null) {
                 return;
             }
-            if (!dc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
+            if (!dc.EqualsOwner(p) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%owner", dc.Owner.getName()).replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
                 e.setCancelled(true);
                 return;
-            } else if (p.hasPermission("deathchest.protection.bypass") & !dc.EqualsOwner(p)) {
+            } else if (PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false) & !dc.EqualsOwner(p)) {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.ThisChestBelongsTo.replace("%owner", dc.Owner.getName()));
             }
             if (Main.HookedPacketListener) {
@@ -138,7 +140,7 @@ public class DeathChestEvent implements Listener {
             if (dc == null) {
                 return;
             }
-            if (!dc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
+            if (!dc.EqualsOwner(p) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
                 return;
             }
             e.setCancelled(false);
@@ -163,11 +165,11 @@ public class DeathChestEvent implements Listener {
             if (dc == null) {
                 return;
             }
-            if (!dc.EqualsOwner(p) && !p.hasPermission("deathchest.protection.bypass")) {
+            if (!dc.EqualsOwner(p) && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%owner", dc.Owner.getName()).replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
                 e.setCancelled(true);
                 return;
-            } else if (p.hasPermission("deathchest.protection.bypass") & !dc.EqualsOwner(p)) {
+            } else if (!PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false) & !dc.EqualsOwner(p)) {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.ThisChestBelongsTo.replace("%owner", dc.Owner.getName()));
             }
 
