@@ -84,6 +84,7 @@ public class DeathChest implements Comparable<DeathChest>{
     }
 
     public void RegisterTask(final OfflinePlayer p, final Location loc) {
+        if(Main.SecondsToRemove == -1) return;
         Runnable timeout = new Runnable() {
             @Override
             public void run() {

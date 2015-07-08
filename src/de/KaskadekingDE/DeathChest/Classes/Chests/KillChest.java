@@ -88,6 +88,7 @@ public class KillChest implements Comparable<KillChest>{
 
     @SuppressWarnings("UnusedDeclaration")
     public void RegisterTask(final OfflinePlayer p, final Location loc) {
+        if(Main.SecondsToRemove == -1) return;
         Runnable timeout = new Runnable() {
             @Override
             public void run() {
