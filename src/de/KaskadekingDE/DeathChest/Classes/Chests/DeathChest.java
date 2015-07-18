@@ -32,15 +32,6 @@ public class DeathChest implements Comparable<DeathChest>{
         DeathChestManager.Add(this);
     }
 
-    /**
-     * An alternative to the constructor if you don't want to create a new variable.
-     */
-    public static void CreateDeathChest(Player owner, Location loc, Inventory inv) {
-        new DeathChest(owner, loc, inv);
-    }
-
-    public static void CreateDeathChest(OfflinePlayer owner, Location loc, Inventory inv) {new DeathChest(owner, loc, inv); }
-
     public void SaveDeathChest() {
         int nextId = GetId();
         if(nextId == -1) {
@@ -88,7 +79,7 @@ public class DeathChest implements Comparable<DeathChest>{
         Runnable timeout = new Runnable() {
             @Override
             public void run() {
-                if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.SIGN_POST) {
+                if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.SIGN_POST) {
                     loc.getBlock().setType(Material.AIR);
                     RemoveChest();
                     if(p.isOnline()) {
@@ -110,7 +101,7 @@ public class DeathChest implements Comparable<DeathChest>{
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".death-chests." + GetId(), null);
         Main.playerData.savePlayerConfig();
         DeathChestManager.Remove(ChestLocation);
-        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST) {
+        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST) {
             ChestLocation.getBlock().setType(Material.AIR);
         }
         Owner = null;
@@ -132,7 +123,7 @@ public class DeathChest implements Comparable<DeathChest>{
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".death-chests." + GetId(), null);
         Main.playerData.savePlayerConfig();
         DeathChestManager.Remove(ChestLocation);
-        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST) {
+        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST ||  ChestLocation.getBlock().getType() == Material.SIGN_POST) {
             ChestLocation.getBlock().setType(Material.AIR);
         }
         Owner = null;

@@ -1,11 +1,13 @@
 package de.KaskadekingDE.DeathChest.Events;
 
 import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
+import de.KaskadekingDE.DeathChest.Classes.EnderHolder;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
 import de.KaskadekingDE.DeathChest.Classes.PermissionManager;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.Animation.AnimationManager;
+import de.KaskadekingDE.DeathChest.Classes.Tasks.PVPTag;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import de.KaskadekingDE.DeathChest.Main;
 import org.bukkit.Bukkit;
@@ -27,7 +29,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.permissions.Permission;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -40,11 +41,14 @@ public class DeathChestEvent implements Listener {
     public static HashMap<Player, Inventory> suppressEvent = new HashMap<Player, Inventory>();
     public static HashMap<Player, Location> chestSpawnLocation = new HashMap<Player, Location>();
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDeath(PlayerDeathEvent e) {
         Player p = e.getEntity();
-        if (!Main.DisableKillChests && p.getKiller() != null && PermissionManager.PlayerHasPermission(p.getKiller(), PermissionManager.KILLER_PERMISSION, false) && !PermissionManager.PlayerHasPermission(p, PermissionManager.KILL_PROTECTION, false)) {
-            // Let do killer chest to the work
+        if (!Main.DisableKillChests  && p.getKiller() != null && PermissionManager.PlayerHasPermission(p.getKiller(), PermissionManager.KILLER_PERMISSION, false) && !PermissionManager.PlayerHasPermission(p, PermissionManager.KILL_PROTECTION, false)) {
+            if(PVPTag.TaggedPlayers.containsKey(p)) {
+                return;
+            }
+        } else if(PVPTag.TaggedPlayers.containsKey(p) && !PermissionManager.PlayerHasPermission(p, PermissionManager.KILL_PROTECTION, false)) {
             return;
         }
         if (PermissionManager.PlayerHasPermission(p, PermissionManager.DEATH_PERMISSION, false)) {
@@ -87,9 +91,20 @@ public class DeathChestEvent implements Listener {
                         inv = sh.getInventory();
                     }
                 } else {
-                    loc.getBlock().setType(Material.CHEST);
-                    Chest deathChest = (Chest) loc.getBlock().getState();
-                    inv = Bukkit.getServer().createInventory(deathChest.getInventory().getHolder(), 54, LangStrings.DeathChestInv);
+                    if(Main.DeathChestType.equalsIgnoreCase("CHEST")) {
+                        loc.getBlock().setType(Material.CHEST);
+                        Chest deathChest = (Chest) loc.getBlock().getState();
+                        inv = Bukkit.getServer().createInventory(deathChest.getInventory().getHolder(), 54, LangStrings.DeathChestInv);
+                    } else if(Main.DeathChestType.equalsIgnoreCase("ENDER_CHEST")) {
+                        loc.getBlock().setType(Material.ENDER_CHEST);
+                        Block block = loc.getBlock();
+                        EnderHolder eh = new EnderHolder(LangStrings.DeathChestInv, 54, block);
+                        inv = eh.getInventory();
+                    } else {
+                        Main.log.severe("[DeathChest] Invalid death chest type " + Main.DeathChestType);
+                        return;
+                    }
+
                 }
 
                 for (ItemStack drop : e.getDrops()) {
@@ -144,6 +159,26 @@ public class DeathChestEvent implements Listener {
                 return;
             }
             e.setCancelled(false);
+        } else if(e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.ENDER_CHEST) {
+            Player p = e.getPlayer();
+            Location loc = e.getClickedBlock().getLocation();
+            DeathChest dc = DeathChest.DeathChestByLocation(loc);
+            if (dc == null) {
+                return;
+            }
+            e.setCancelled(true);
+            if (!dc.EqualsOwner(p) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%owner", dc.Owner.getName()).replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+                e.setCancelled(true);
+                return;
+            } else if (PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false) & !dc.EqualsOwner(p)) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.ThisChestBelongsTo.replace("%owner", dc.Owner.getName()));
+            }
+            if (Main.HookedPacketListener) {
+                AnimationManager.Create(p, dc.ChestLocation);
+                Main.ProtocolManager.SendChestOpenPacket(dc.ChestLocation, p);
+            }
+            p.openInventory(dc.DeathInventory);
         }
     }
 
@@ -211,6 +246,20 @@ public class DeathChestEvent implements Listener {
                 return;
             }
             if (Main.HookedPacketListener) {
+                Main.ProtocolManager.SendChestClosePacket(dc.ChestLocation, p);
+            }
+            if (Helper.ChestEmpty(dc.DeathInventory)) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestRemoved);
+                dc.RemoveChest(true);
+            }
+        } else if(ih instanceof EnderHolder) {
+            EnderHolder eh = (EnderHolder) ih;
+            Block block = eh.getBlock();
+            Location loc = new Location(block.getLocation().getWorld(), block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ());
+            DeathChest dc = DeathChest.DeathChestByLocation(loc);
+            if(dc == null) return;
+            if (Main.HookedPacketListener) {
+                AnimationManager.Remove(p);
                 Main.ProtocolManager.SendChestClosePacket(dc.ChestLocation, p);
             }
             if (Helper.ChestEmpty(dc.DeathInventory)) {

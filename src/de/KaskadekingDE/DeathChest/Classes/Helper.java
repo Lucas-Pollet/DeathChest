@@ -40,6 +40,7 @@ public class Helper {
 
     public static Location ChestNearLocation(Location loc) {
         if(loc.getBlock().getType() == Material.SIGN_POST) return null;
+        if(loc.getBlock().getType() == Material.ENDER_CHEST) return null;
         Location locEast = new Location(loc.getWorld(), loc.getX() + 1, loc.getY(), loc.getZ());
         Location locSouth = new Location(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ() + 1);
         Location locWest = new Location(loc.getWorld(), loc.getX() - 1, loc.getY(), loc.getZ());

@@ -55,7 +55,7 @@ public class ChestProtector implements Listener {
 
         Player p = e.getPlayer();
         if( e.getAction() == Action.RIGHT_CLICK_BLOCK ) {
-            if(e.getClickedBlock().getType() != Material.CHEST && e.getClickedBlock().getType() != Material.SIGN_POST)
+            if(e.getClickedBlock().getType() != Material.CHEST && e.getClickedBlock().getType() != Material.SIGN_POST &&  e.getClickedBlock().getType() != Material.ENDER_CHEST)
                 return;
             if(p.isSneaking() && Main.SneakOpenLoot) {
                 Helper.ChestState state = Helper.GetChestType(e.getClickedBlock().getLocation());
@@ -75,7 +75,7 @@ public class ChestProtector implements Listener {
                         break;
                 }
             } else {
-                if(e.getClickedBlock().getType() != Material.CHEST && e.getClickedBlock().getType() != Material.SIGN_POST)
+                if(e.getClickedBlock().getType() != Material.CHEST && e.getClickedBlock().getType() != Material.SIGN_POST && e.getClickedBlock().getType() != Material.ENDER_CHEST)
                     return;
                 Helper.ChestState state = Helper.GetChestType(e.getClickedBlock().getLocation());
                 switch(state) {
@@ -111,7 +111,7 @@ public class ChestProtector implements Listener {
         Block block = e.getBlock();
         Location loc = block.getLocation();
         Helper.ChestState state = Helper.GetChestType(loc);
-        if(block.getType() == Material.CHEST) {
+        if(block.getType() == Material.CHEST ||block.getType() == Material.ENDER_CHEST) {
             if(state == Helper.ChestState.DeathChest) {
                 DeathChest dc = DeathChest.DeathChestByLocation(loc);
                 if(!Main.AllowBreaking) {
@@ -261,7 +261,7 @@ public class ChestProtector implements Listener {
         Location blockUnderSign = null;
         while(iter.hasNext()) {
             Block b = iter.next();
-            if (b.getType() == Material.CHEST) {
+            if (b.getType() == Material.CHEST ||b.getType() == Material.ENDER_CHEST) {
                 Location loc = b.getLocation();
                 Helper.ChestState state = Helper.GetChestType(loc);
                 if (state == Helper.ChestState.DeathChest || state == Helper.ChestState.HomeChest || state == Helper.ChestState.KillChest) {

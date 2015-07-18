@@ -50,7 +50,7 @@ cant-set-home-chest-in-this-world: '&cYou can''t set your home chest in this wor
 # Death-Chests & Home-Chests
 this-chest-belongs-to: '&eThis chest belongs to %owner'
 cant-open: '&cYou can''t open %types from other players. This chest belongs to %owner'
-chest-removed: '&cYour %types has been removed!'
+chest-removed: '&cYour %type has been removed!'
 # Death-Chests & Kill-Chests
 despawned: '&cYour %type has been despawned!'
 # Remove-Command

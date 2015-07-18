@@ -6,12 +6,14 @@ import de.KaskadekingDE.DeathChest.Classes.Chests.ChestManager.KillChestManager;
 import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
+import de.KaskadekingDE.DeathChest.Classes.EnderHolder;
 import de.KaskadekingDE.DeathChest.Classes.Helper;
 import de.KaskadekingDE.DeathChest.Classes.PacketManagement.IProtocolManager;
 import de.KaskadekingDE.DeathChest.Classes.ProtectedRegionManager;
 import de.KaskadekingDE.DeathChest.Classes.Serialization.InventorySerialization;
 import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.IBlockManager;
+import de.KaskadekingDE.DeathChest.Classes.Tasks.PVPTag;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.TaskScheduler;
 import de.KaskadekingDE.DeathChest.Classes.WorldGuard.DeathChestWGFlag;
 import de.KaskadekingDE.DeathChest.Classes.WorldGuard.IWorldGuardFlag;
@@ -24,6 +26,7 @@ import de.KaskadekingDE.DeathChest.Events.HomeChestEvent;
 import de.KaskadekingDE.DeathChest.Events.KillChestEvent;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
@@ -70,6 +73,8 @@ public class Main extends JavaPlugin {
     public static boolean HomeChestOnlyActiveWhitelistedWorlds;
     public static boolean SneakOpenLoot;
     public static int Radius;
+    public static int PvpTagTime;
+    public static String DeathChestType;
 
     public static IWorldGuardFlag WorldGuardManager;
 
@@ -97,6 +102,7 @@ public class Main extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ChestProtector(), this);
         Bukkit.getPluginManager().registerEvents(new HomeChestEvent(), this);
         Bukkit.getPluginManager().registerEvents(new KillChestEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new PVPTag(), this);
         if(ProtocolManager != null) {
             ProtocolManager.RegisterEvents();
         }
@@ -150,6 +156,8 @@ public class Main extends JavaPlugin {
         String[] defaultList = {"AIR", "STONE", "DEAD_BUSH", "LEAVES", "RED_ROSE", "YELLOW_FLOWER", "VINE", "LONG_GRASS", "TALL_GRASS"};
         String[] defaultWorlds = {"world"};
         getConfig().addDefault("allow-breaking-chests", true);
+        getConfig().addDefault("death-chest-type", "CHEST");
+        getConfig().addDefault("pvp-tag-time", 30);
         getConfig().addDefault("maximum-deathchests", 3);
         getConfig().addDefault("maximum-killchests", 2);
         getConfig().addDefault("disable-killchests", false);
@@ -183,6 +191,8 @@ public class Main extends JavaPlugin {
         SneakOpenLoot = getConfig().getBoolean("fast-loot");
         SpawnOutside = getConfig().getBoolean("spawn-chest-outside-protected-regions");
         Radius = getConfig().getInt("search-radius-for-protected-regions");
+        PvpTagTime = getConfig().getInt("pvp-tag-time");
+        DeathChestType = getConfig().getString("death-chest-type");
         playerData = new PlayerData(this);
         languageConfig = new LanguageConfig(this);
         playerData.saveDefaultPlayerConfig();
@@ -234,7 +244,11 @@ public class Main extends JavaPlugin {
                                 } else if(UseTombstones && loc.getWorld().getBlockAt(loc).getType() == Material.SIGN_POST) {
                                     SignHolder sh = new SignHolder(LangStrings.DeathChestInv, 54, loc);
                                     inv = sh.getInventory();
-                                } else{
+                                } else if(loc.getBlock().getType() == Material.ENDER_CHEST) {
+                                    Block block = loc.getBlock();
+                                    EnderHolder eh = new EnderHolder(LangStrings.DeathChestInv, 54, block);
+                                    inv = eh.getInventory();
+                                } else {
                                     log.warning("[DeathChest] Found invalid death chest! It will be removed from the player data!");
                                     Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".death-chests." + id, null);
                                     continue;
@@ -249,6 +263,10 @@ public class Main extends JavaPlugin {
                                 } else if(UseTombstones && bs instanceof Sign) {
                                     SignHolder sh = new SignHolder(LangStrings.DeathChestInv, 54, loc);
                                     inv = sh.getInventory();
+                                } else if(loc.getBlock().getType() == Material.ENDER_CHEST) {
+                                    Block block = loc.getBlock();
+                                    EnderHolder eh = new EnderHolder(LangStrings.DeathChestInv, 54, block);
+                                    inv = eh.getInventory();
                                 } else {
                                     log.warning("[DeathChest] Found invalid death chest! It will be removed from the player data!");
                                     Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".death-chests." + id, null);
@@ -302,6 +320,10 @@ public class Main extends JavaPlugin {
                                 } else if(UseTombstones && bs instanceof Sign) {
                                     SignHolder sh = new SignHolder(LangStrings.KillChestInv, 54, loc);
                                     inv = sh.getInventory();
+                                } else if(loc.getBlock().getType() == Material.ENDER_CHEST) {
+                                    Block block = loc.getBlock();
+                                    EnderHolder eh = new EnderHolder(LangStrings.KillChestInv, 54, block);
+                                    inv = eh.getInventory();
                                 } else {
                                     log.warning("[DeathChest] Found invalid kill-chests chest! It will be removed from the player data!");
                                     Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".kill-chests." + id, null);
@@ -317,6 +339,10 @@ public class Main extends JavaPlugin {
                                 } else if(UseTombstones && bs instanceof Sign) {
                                     SignHolder sh = new SignHolder(LangStrings.KillChestInv, 54, loc);
                                     inv = sh.getInventory();
+                                } else if(loc.getBlock().getType() == Material.ENDER_CHEST) {
+                                    Block block = loc.getBlock();
+                                    EnderHolder eh = new EnderHolder(LangStrings.KillChestInv, 54, block);
+                                    inv = eh.getInventory();
                                 } else {
                                     log.warning("[DeathChest] Found invalid kill chest! It will be removed from the player data!");
                                     Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".kill-chests." + id, null);
@@ -371,6 +397,10 @@ public class Main extends JavaPlugin {
                                 Chest ch = (Chest) bs;
                                 InventoryHolder ih = ch.getInventory().getHolder();
                                 inv = Bukkit.createInventory(ih, 54, LangStrings.HomeChestInv);
+                            } else if(loc.getBlock().getType() == Material.ENDER_CHEST) {
+                                Block block = loc.getBlock();
+                                EnderHolder eh = new EnderHolder(LangStrings.HomeChestInv, 54, block);
+                                inv = eh.getInventory();
                             } else {
                                 log.warning("[DeathChest] Found invalid home chest! It will be removed from the player data!");
                                 Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".home-chest", null);
@@ -383,6 +413,10 @@ public class Main extends JavaPlugin {
                                 Chest ch = (Chest) bs;
                                 InventoryHolder ih = ch.getInventory().getHolder();
                                 inv = Bukkit.createInventory(ih, 54, LangStrings.HomeChestInv);
+                            } else if(loc.getBlock().getType() == Material.ENDER_CHEST) {
+                                Block block = loc.getBlock();
+                                EnderHolder eh = new EnderHolder(LangStrings.HomeChestInv, 54, block);
+                                inv = eh.getInventory();
                             } else {
                                 log.warning("[DeathChest] Found invalid home chest! It will be removed from the player data!");
                                 Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".home-chest", null);

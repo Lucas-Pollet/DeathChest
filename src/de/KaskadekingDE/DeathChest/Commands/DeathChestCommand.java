@@ -201,7 +201,7 @@ public class DeathChestCommand implements CommandExecutor {
             }
             Location loc = hc.ChestLocation;
             hc.RemoveChest();
-            if(loc.getBlock().getType() == Material.CHEST) {
+            if(loc.getBlock().getType() == Material.CHEST || loc.getBlock().getType() == Material.ENDER_CHEST) {
                 loc.getBlock().setType(Material.AIR);
             }
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.HomeChestRemoved);
@@ -343,7 +343,7 @@ public class DeathChestCommand implements CommandExecutor {
                 }
                 Location loc = hc.ChestLocation;
                 hc.RemoveChest();
-                if(loc.getBlock().getType() == Material.CHEST) {
+                if(loc.getBlock().getType() == Material.CHEST || loc.getBlock().getType() == Material.ENDER_CHEST) {
                     loc.getBlock().setType(Material.AIR);
                 }
                 cs.sendMessage(LangStrings.Prefix + " " + LangStrings.HomeChestRemovedPlayer.replace("%player", p.getName()));

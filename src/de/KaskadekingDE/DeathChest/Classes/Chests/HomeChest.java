@@ -28,8 +28,6 @@ public class HomeChest {
         HomeChestManager.Add(this);
     }
 
-    public static void CreateHomeChest(Player owner, Location loc, Inventory inv) { new HomeChest(owner, loc, inv); }
-
     public static void CreateHomeChest(OfflinePlayer owner, Location loc, Inventory inv) { new HomeChest(owner, loc, inv); }
 
     public void SaveHomeChest() {
