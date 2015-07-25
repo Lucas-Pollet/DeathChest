@@ -435,6 +435,7 @@ public class Main extends JavaPlugin {
             }
         }
         Main.playerData.savePlayerConfig();
+        DeathChestManager.Add(null);
     }
 
     public void LoadLanguage() {

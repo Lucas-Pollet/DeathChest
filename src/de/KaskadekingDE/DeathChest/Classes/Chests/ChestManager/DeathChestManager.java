@@ -34,11 +34,7 @@ public class DeathChestManager {
         Iterator<DeathChest> deathChestIterator = deathChests.iterator();
         while(deathChestIterator.hasNext()) {
             DeathChest dc = deathChestIterator.next();
-            if(dc == null) {
-                deathChests.remove(null);
-                continue;
-            } else if(dc.Owner == null) {
-                deathChests.remove(dc);
+            if(dc == null || dc.Owner == null) {
                 continue;
             }
             if(dc.Owner.getUniqueId().equals(p.getUniqueId())) {
