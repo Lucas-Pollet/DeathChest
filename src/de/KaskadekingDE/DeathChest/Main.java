@@ -512,12 +512,15 @@ public class Main extends JavaPlugin {
 
     public void SaveConfig() {
         for(DeathChest dc: DeathChestManager.deathChests) {
+            if(dc == null) return;
             dc.SaveDeathChest();
         }
         for(HomeChest hc: HomeChestManager.homeChests) {
+            if(hc == null) return;
             hc.SaveHomeChest();
         }
         for(KillChest kc: KillChestManager.killChests) {
+            if(kc == null) return;
             kc.SaveKillChest();
         }
         saveConfig();
