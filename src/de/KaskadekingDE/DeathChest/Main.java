@@ -108,6 +108,7 @@ public class Main extends JavaPlugin {
         }
         ProtectedRegionManager = new ProtectedRegionManager();
         log.info("[DeathChest] DeathChest v" + pdf.getVersion() + " by KaskadekingDE has been enabled!");
+        log.info("[DeathChest] Debugging has been enabled!");
     }
 
     @Override
@@ -120,6 +121,7 @@ public class Main extends JavaPlugin {
         }
         plugin = null;
         log.info("[DeathChest] DeathChest has been disabled!");
+        log.info("[DeathChest] Debugging has been disabled!");
     }
 
     private void checkWorldGuard() {

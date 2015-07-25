@@ -6,6 +6,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class KillChestManager {
@@ -37,7 +38,9 @@ public class KillChestManager {
     }
 
     public static KillChest GetByLocation(Location loc) {
-        for(KillChest kc: killChests) {
+        Iterator<KillChest> iter = killChests.iterator();
+        while(iter.hasNext()) {
+            KillChest kc = iter.next();
             if(kc == null || kc.ChestLocation == null ) {
                 continue;
             }

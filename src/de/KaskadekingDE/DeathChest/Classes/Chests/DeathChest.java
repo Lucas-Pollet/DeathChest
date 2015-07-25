@@ -79,7 +79,7 @@ public class DeathChest implements Comparable<DeathChest>{
         Runnable timeout = new Runnable() {
             @Override
             public void run() {
-                if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.SIGN_POST) {
+                if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.SIGN_POST) {
                     loc.getBlock().setType(Material.AIR);
                     RemoveChest();
                     if(p.isOnline()) {

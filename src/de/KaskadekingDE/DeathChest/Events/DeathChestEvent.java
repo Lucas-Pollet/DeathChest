@@ -272,7 +272,7 @@ public class DeathChestEvent implements Listener {
     private boolean checkRequirements(Player p, List<ItemStack> drops) {
         HomeChest hc = HomeChest.HomeChestByPlayer(p);
         if (hc != null && !hc.IsFull()) {
-            // Let do the home chest event do their work.
+         // Let do the home chest event do their work.
             return false;
         }
         if (drops == null || drops.size() == 0) {
@@ -299,10 +299,11 @@ public class DeathChestEvent implements Listener {
                 }
             }
         }
+
         if (!worldAllowed) {
             return false;
         }
-        if (p.getLocation().getBlockY() < 0) {
+        if (p.getLocation().getBlockY() < 0 ||p.getLocation().getBlockY() > 256) {
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
             return false;
         }
@@ -318,7 +319,7 @@ public class DeathChestEvent implements Listener {
             Location chestLoc = Helper.AvailableLocation(loc);
             if(chestLoc == null) {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.FailedPlacingDeathChest.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-                 return false;
+                return false;
             } else {
                 chestSpawnLocation.put(p, chestLoc);
             }

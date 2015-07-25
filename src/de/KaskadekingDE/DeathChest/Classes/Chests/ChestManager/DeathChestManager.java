@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class DeathChestManager {
@@ -30,9 +31,11 @@ public class DeathChestManager {
 
     public static List<DeathChest> GetByOwner(OfflinePlayer p) {
         List<DeathChest> result = new ArrayList<DeathChest>();
-        for(DeathChest dc: deathChests) {
+        Iterator<DeathChest> deathChestIterator = deathChests.iterator();
+        while(deathChestIterator.hasNext()) {
+            DeathChest dc = deathChestIterator.next();
             if(dc == null) {
-                deathChests.removeAll(Collections.singleton(null));
+                deathChests.remove(null);
                 continue;
             } else if(dc.Owner == null) {
                 deathChests.remove(dc);
@@ -46,7 +49,9 @@ public class DeathChestManager {
     }
 
     public static DeathChest GetByLocation(Location loc) {
-        for(DeathChest dc: deathChests) {
+        Iterator<DeathChest> deathChestIterator = deathChests.iterator();
+        while(deathChestIterator.hasNext()) {
+            DeathChest dc = deathChestIterator.next();
             if(dc == null || dc.ChestLocation == null ) {
                 deathChests.remove(dc);
                 continue;
