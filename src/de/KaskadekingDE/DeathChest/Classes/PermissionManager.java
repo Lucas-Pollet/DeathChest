@@ -19,6 +19,7 @@ public class PermissionManager {
     public static List<String> LOCATIONS_PERMISSION = CreatePermissionList("deathchest.locations", "deathchest.locations.*", "deathchest.*");
     public static List<String> LOCATIONS_OTHERS_PERMISSION = CreatePermissionList("deathchest.locations.others","deathchest.locations.*", "deathchest.*");
     public static List<String> REMOVE_PERMISSION = CreatePermissionList("deathchest.remove", "deathchest.*");
+    public static List<String> PAY_PERMISSION = CreatePermissionList("deathchest.togglepay", "deathchest.*");
 
     private static String AllPermissions = "deathchest.*";
     private static String Help = "deathchest.help";

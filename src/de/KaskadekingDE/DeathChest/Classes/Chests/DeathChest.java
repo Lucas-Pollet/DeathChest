@@ -79,7 +79,8 @@ public class DeathChest implements Comparable<DeathChest>{
         Runnable timeout = new Runnable() {
             @Override
             public void run() {
-                if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.SIGN_POST) {
+                Material type = Material.getMaterial(Main.DeathChestType);
+                if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.SIGN_POST || loc.getWorld().getBlockAt(loc).getType() == type) {
                     loc.getBlock().setType(Material.AIR);
                     RemoveChest();
                     if(p.isOnline()) {
@@ -101,7 +102,8 @@ public class DeathChest implements Comparable<DeathChest>{
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".death-chests." + GetId(), null);
         Main.playerData.savePlayerConfig();
         DeathChestManager.Remove(ChestLocation);
-        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST) {
+        Material type = Material.getMaterial(Main.DeathChestType);
+        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST || ChestLocation.getBlock().getType() == type) {
             ChestLocation.getBlock().setType(Material.AIR);
         }
         Owner = null;
@@ -123,7 +125,8 @@ public class DeathChest implements Comparable<DeathChest>{
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".death-chests." + GetId(), null);
         Main.playerData.savePlayerConfig();
         DeathChestManager.Remove(ChestLocation);
-        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST ||  ChestLocation.getBlock().getType() == Material.SIGN_POST) {
+        Material type = Material.getMaterial(Main.DeathChestType);
+        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST ||  ChestLocation.getBlock().getType() == Material.SIGN_POST || ChestLocation.getBlock().getType() == type) {
             ChestLocation.getBlock().setType(Material.AIR);
         }
         Owner = null;

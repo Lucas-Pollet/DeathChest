@@ -39,6 +39,7 @@ public class DeathChestCommand implements CommandExecutor {
             cs.sendMessage("§e/dchest home §7- §aSet your home chest");
             cs.sendMessage("§e/dchest locations [player] §7- §aShow all locations of your death chest or from another player");
             cs.sendMessage("§e/dchest remove <id> [death/kill/home] [player] §7- §aRemoves a death chest from the config & memory.");
+            cs.sendMessage("§e/dchest togglepay §7- §aToggles a value indicating whether you want to pay for death chests.");
             return true;
         } else if(args[0].equalsIgnoreCase("reload")) {
             if(!PermissionManager.PlayerHasPermission(cs, PermissionManager.RELOAD_PERMISSION, false)) {
@@ -70,6 +71,27 @@ public class DeathChestCommand implements CommandExecutor {
             HomeChestEvent.setHome.add(p);
             p.sendMessage(LangStrings.Prefix + " " + LangStrings.SetupHomeChest);
             return true;
+        } else if(args[0].equalsIgnoreCase("togglepay")) {
+            if(!(cs instanceof Player)) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.OnlyPlayers);
+            }  else if(!PermissionManager.PlayerHasPermission(cs, PermissionManager.PAY_PERMISSION, false)) {
+                cs.sendMessage(LangStrings.Prefix + " " + LangStrings.NoPermissions);
+                return true;
+            }
+            if(!Main.VaultEnabled) {
+                cs.sendMessage(LangStrings.Prefix + " §cVault support is not enabled on this server.");
+                return true;
+            }
+            Player p = (Player) cs;
+            boolean oldValue = Main.playerData.getPlayerConfig().getBoolean("players." + p.getUniqueId() + ".pay-enabled", false);
+            boolean newValue = !oldValue;
+            Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".pay-enabled", newValue);
+            Main.playerData.savePlayerConfig();
+            if(newValue)  {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.AllowPaying);
+            } else {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.DisallowPaying);
+            }
         } else if(args[0].equalsIgnoreCase("locations")) {
             if(args.length == 1) {
                 if(!(cs instanceof Player)) {

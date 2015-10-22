@@ -8,6 +8,7 @@ import de.KaskadekingDE.DeathChest.Classes.Tasks.Animation.AnimationManager;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.PVPTag;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import de.KaskadekingDE.DeathChest.Main;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -59,6 +60,16 @@ public class HomeChestEvent implements Listener {
                             setHome.remove(p);
                             e.setCancelled(true);
                             return;
+                        }
+                        if(Main.VaultEnabled && Main.HomeChestCost > 0) {
+                            EconomyResponse r = Main.Economy.withdrawPlayer(p, Main.HomeChestCost);
+                            String price = Main.Economy.format(Main.HomeChestCost);
+                            if(r.transactionSuccess()) {
+                                p.sendMessage(LangStrings.Prefix + " " + LangStrings.TakenFromAccountHC.replace("%price", price));
+                            } else {
+                                p.sendMessage(LangStrings.Prefix + " " + LangStrings.NotEnoughMoneyHC.replace("%price", price));
+                                return;
+                            }
                         }
                         Inventory inv = Bukkit.createInventory(ch.getInventory().getHolder(), 54, LangStrings.HomeChestInv);
                         HomeChest home = new HomeChest(p, loc, inv);

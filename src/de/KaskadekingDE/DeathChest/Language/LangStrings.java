@@ -79,4 +79,11 @@ public class LangStrings {
 
     public static String NotAllowedToBreak;
 
+    public static String TakenFromAccountDC;
+    public static String TakenFromAccountKC;
+    public static String TakenFromAccountHC;
+    public static String NotEnoughMoney;
+    public static String NotEnoughMoneyHC;
+    public static String AllowPaying;
+    public static String DisallowPaying;
 }

@@ -55,7 +55,7 @@ public class ChestProtector implements Listener {
 
         Player p = e.getPlayer();
         if( e.getAction() == Action.RIGHT_CLICK_BLOCK ) {
-            if(e.getClickedBlock().getType() != Material.CHEST && e.getClickedBlock().getType() != Material.SIGN_POST &&  e.getClickedBlock().getType() != Material.ENDER_CHEST)
+            if(Helper.GetChestType(e.getClickedBlock().getLocation()) == Helper.ChestState.Default)
                 return;
             if(p.isSneaking() && Main.SneakOpenLoot) {
                 Helper.ChestState state = Helper.GetChestType(e.getClickedBlock().getLocation());
@@ -75,7 +75,7 @@ public class ChestProtector implements Listener {
                         break;
                 }
             } else {
-                if(e.getClickedBlock().getType() != Material.CHEST && e.getClickedBlock().getType() != Material.SIGN_POST && e.getClickedBlock().getType() != Material.ENDER_CHEST)
+                if(Helper.GetChestType(e.getClickedBlock().getLocation()) == Helper.ChestState.Default)
                     return;
                 Helper.ChestState state = Helper.GetChestType(e.getClickedBlock().getLocation());
                 switch(state) {
@@ -111,148 +111,59 @@ public class ChestProtector implements Listener {
         Block block = e.getBlock();
         Location loc = block.getLocation();
         Helper.ChestState state = Helper.GetChestType(loc);
-        if(block.getType() == Material.CHEST ||block.getType() == Material.ENDER_CHEST) {
-            if(state == Helper.ChestState.DeathChest) {
-                DeathChest dc = DeathChest.DeathChestByLocation(loc);
-                if(!Main.AllowBreaking) {
+
+        if (state == Helper.ChestState.DeathChest) {
+            DeathChest dc = DeathChest.DeathChestByLocation(loc);
+            if (!dc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
+                e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreakFromOtherPlayers.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+                e.setCancelled(true);
+            } else {
+                if (!Main.AllowBreaking) {
                     e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
                     e.setCancelled(true);
                     return;
                 }
-                if(!dc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
-                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-                    e.setCancelled(true);
-                } else {
-                    e.getPlayer().closeInventory();
-                    for (ItemStack i : dc.DeathInventory.getContents())
-                    {
-                        if(i != null) {
-                            e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), i);
-                        }
-                    }
-                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.ChestRemoved.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-                    dc.RemoveChest(true);
-                }
-            } else if(state == Helper.ChestState.HomeChest) {
-                HomeChest hc = HomeChest.HomeChestByLocation(loc);
-                if(!hc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
-                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest));
-                    e.setCancelled(true);
-                } else {
 
-                    e.getPlayer().closeInventory();
-                    for (ItemStack i : hc.HomeInventory.getContents())
-                    {
-                        if(i != null) {
-                            e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), i);
-                        }
-                    }
-                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.ChestRemoved.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest));
-                    hc.RemoveChest();
-                }
-            } else if(state == Helper.ChestState.KillChest) {
-                if(!Main.AllowBreaking) {
-                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
-                    e.setCancelled(true);
-                    return;
-                }
-
-                KillChest kc = KillChest.KillChestByLocation(loc);
                 e.getPlayer().closeInventory();
-                for(ItemStack i: kc.DeathInventory.getContents()) {
-                    if(i != null) {
+                for (ItemStack i : dc.DeathInventory.getContents()) {
+                    if (i != null) {
                         e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), i);
                     }
                 }
-                kc.RemoveChest(true);
+                e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.ChestRemoved.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+                dc.RemoveChest(true);
             }
-
-        } else if(Main.UseTombstones && block.getType() == Material.SIGN_POST) {
-            if(state == Helper.ChestState.DeathChest) {
-                DeathChest dc = DeathChest.DeathChestByLocation(loc);
-                if(!dc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
-                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreakFromOtherPlayers.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-                    e.setCancelled(true);
-                } else {
-                    if(!Main.AllowBreaking) {
-                        e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-                        e.setCancelled(true);
-                        return;
-                    }
-
-                    e.getPlayer().closeInventory();
-                    for (ItemStack i : dc.DeathInventory.getContents())
-                    {
-                        if(i != null) {
-                            e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), i);
-                        }
-                    }
-                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.ChestRemoved.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-                    dc.RemoveChest(true);
-                }
-            } else if(state == Helper.ChestState.HomeChest) {
-                HomeChest hc = HomeChest.HomeChestByLocation(loc);
-                if(!hc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
-                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest));
-                    e.setCancelled(true);
-                } else {
-                    e.getPlayer().closeInventory();
-                    for (ItemStack i : hc.HomeInventory.getContents())
-                    {
-                        if(i != null) {
-                            e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), i);
-                        }
-                    }
-                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.ChestRemoved.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest));
-                    hc.RemoveChest();
-                }
-            } else if(state == Helper.ChestState.KillChest) {
-                if(!Main.AllowBreaking) {
-                    e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
-                    e.setCancelled(true);
-                    return;
-                }
-                KillChest kc = KillChest.KillChestByLocation(loc);
+        } else if (state == Helper.ChestState.HomeChest) {
+            HomeChest hc = HomeChest.HomeChestByLocation(loc);
+            if (!hc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
+                e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest));
+                e.setCancelled(true);
+            } else {
                 e.getPlayer().closeInventory();
-                for(ItemStack i: kc.DeathInventory.getContents()) {
-                    if(i != null) {
+                for (ItemStack i : hc.HomeInventory.getContents()) {
+                    if (i != null) {
                         e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), i);
                     }
                 }
-                kc.RemoveChest(true);
+                e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.ChestRemoved.replace("%type", LangStrings.HomeChest + " " + LangStrings.TypeChest));
+                hc.RemoveChest();
             }
-        } else {
-            loc = loc.add(0.0, 1.0, 0.0);
-            if(loc.getBlock().getType() == Material.SIGN_POST) {
-                Helper.ChestState signState = Helper.GetChestType(loc);
-                if(signState == Helper.ChestState.DeathChest ) {
-                    DeathChest dc = DeathChest.DeathChestByLocation(loc);
-                    if(!dc.Owner.equals(e.getPlayer()) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
-                        e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-                        e.setCancelled(true);
-                    } else {
-                        e.getPlayer().closeInventory();
-                        for (ItemStack i : dc.DeathInventory.getContents())
-                        {
-                            if(i != null) {
-                                e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), i);
-                            }
-                        }
-                        e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.ChestRemoved.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
-                        dc.RemoveChest(true);
-                    }
-                }  else if(signState == Helper.ChestState.KillChest) {
-                    KillChest kc = KillChest.KillChestByLocation(loc);
-                    e.getPlayer().closeInventory();
-                    for(ItemStack i: kc.DeathInventory.getContents()) {
-                        if(i != null) {
-                            e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), i);
-                        }
-                    }
-                    kc.RemoveChest(true);
+        } else if (state == Helper.ChestState.KillChest) {
+            if (!Main.AllowBreaking) {
+                e.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.NotAllowedToBreak.replace("%type", LangStrings.KillChest + " " + LangStrings.ActiveType));
+                e.setCancelled(true);
+                return;
+            }
+            KillChest kc = KillChest.KillChestByLocation(loc);
+            e.getPlayer().closeInventory();
+            for (ItemStack i : kc.DeathInventory.getContents()) {
+                if (i != null) {
+                    e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), i);
                 }
             }
+            kc.RemoveChest(true);
         }
+
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -261,17 +172,17 @@ public class ChestProtector implements Listener {
         Location blockUnderSign = null;
         while(iter.hasNext()) {
             Block b = iter.next();
-            if (b.getType() == Material.CHEST ||b.getType() == Material.ENDER_CHEST) {
-                Location loc = b.getLocation();
-                Helper.ChestState state = Helper.GetChestType(loc);
-                if (state == Helper.ChestState.DeathChest || state == Helper.ChestState.HomeChest || state == Helper.ChestState.KillChest) {
-                    iter.remove();
-                }
-            } else if(b.getType() == Material.SIGN_POST) {
+            if(b.getType() == Material.SIGN_POST) {
                 Location loc = b.getLocation();
                 Helper.ChestState state = Helper.GetChestType(loc);
                 if (state == Helper.ChestState.DeathChest || state == Helper.ChestState.HomeChest || state == Helper.ChestState.KillChest) {
                     blockUnderSign = b.getLocation().add(0.0, -1.0, 0.0);
+                    iter.remove();
+                }
+            } else {
+                Location loc = b.getLocation();
+                Helper.ChestState state = Helper.GetChestType(loc);
+                if (state == Helper.ChestState.DeathChest || state == Helper.ChestState.HomeChest || state == Helper.ChestState.KillChest) {
                     iter.remove();
                 }
             }

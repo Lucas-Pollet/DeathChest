@@ -1,17 +1,14 @@
 package de.KaskadekingDE.DeathChest;
 
+import de.KaskadekingDE.DeathChest.Classes.*;
 import de.KaskadekingDE.DeathChest.Classes.Chests.ChestManager.DeathChestManager;
 import de.KaskadekingDE.DeathChest.Classes.Chests.ChestManager.HomeChestManager;
 import de.KaskadekingDE.DeathChest.Classes.Chests.ChestManager.KillChestManager;
 import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.KillChest;
-import de.KaskadekingDE.DeathChest.Classes.EnderHolder;
-import de.KaskadekingDE.DeathChest.Classes.Helper;
 import de.KaskadekingDE.DeathChest.Classes.PacketManagement.IProtocolManager;
-import de.KaskadekingDE.DeathChest.Classes.ProtectedRegionManager;
 import de.KaskadekingDE.DeathChest.Classes.Serialization.InventorySerialization;
-import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.SolidBlockManager.IBlockManager;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.PVPTag;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.TaskScheduler;
@@ -25,6 +22,8 @@ import de.KaskadekingDE.DeathChest.Events.DeathChestEvent;
 import de.KaskadekingDE.DeathChest.Events.HomeChestEvent;
 import de.KaskadekingDE.DeathChest.Events.KillChestEvent;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
+import net.milkbowl.vault.Vault;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -33,6 +32,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Arrays;
@@ -50,6 +50,7 @@ public class Main extends JavaPlugin {
     public static IBlockManager SolidBlockManager;
 
     public static ProtectedRegionManager ProtectedRegionManager;
+    public static Economy Economy;
 
     // Player-Data & Language
     public static PlayerData playerData;
@@ -65,6 +66,11 @@ public class Main extends JavaPlugin {
     public static boolean ShowCoords;
     public static boolean AllowHomeChestInAllWorlds;
     public static boolean HookedPacketListener;
+    public static boolean VaultEnabled;
+    public static boolean ForceToPay;
+    public static double DeathChestCost;
+    public static double KillChestCost;
+    public static double HomeChestCost;
     public static boolean UseTombstones;
     public static boolean SpawnTombstonesOnNonSolid;
     public static boolean SpawnChestIfNotAbleToPlaceTombstone;
@@ -75,6 +81,7 @@ public class Main extends JavaPlugin {
     public static int Radius;
     public static int PvpTagTime;
     public static String DeathChestType;
+    public static String KillChestType;
 
     public static IWorldGuardFlag WorldGuardManager;
 
@@ -96,6 +103,7 @@ public class Main extends JavaPlugin {
         checkPacketListener();
         checkWorldGuard();
         LoadConfig();
+        checkVault();
         PluginDescriptionFile pdf = getDescription();
         getCommand("deathchest").setExecutor(new DeathChestCommand());
         Bukkit.getPluginManager().registerEvents(new DeathChestEvent(), this);
@@ -108,7 +116,6 @@ public class Main extends JavaPlugin {
         }
         ProtectedRegionManager = new ProtectedRegionManager();
         log.info("[DeathChest] DeathChest v" + pdf.getVersion() + " by KaskadekingDE has been enabled!");
-        log.info("[DeathChest] Debugging has been enabled!");
     }
 
     @Override
@@ -121,7 +128,22 @@ public class Main extends JavaPlugin {
         }
         plugin = null;
         log.info("[DeathChest] DeathChest has been disabled!");
-        log.info("[DeathChest] Debugging has been disabled!");
+    }
+
+    private void checkVault() {
+        if(Bukkit.getPluginManager().isPluginEnabled("Vault") && VaultEnabled) {
+            RegisteredServiceProvider<Economy> economyProvider = Bukkit.getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+            if(economyProvider != null) {
+                Main.Economy = economyProvider.getProvider();
+            }
+            if(Economy == null) {
+                log.severe("[DeathChest] Failed to get economy provider from Vault");
+                VaultEnabled = false;
+            }
+        } else if(!Bukkit.getPluginManager().isPluginEnabled("Vault") && VaultEnabled) {
+            log.warning("[DeathChest] Vault is enabled in config but the plugin could not be found.");
+            VaultEnabled = false;
+        }
     }
 
     private void checkWorldGuard() {
@@ -157,8 +179,14 @@ public class Main extends JavaPlugin {
     public void LoadConfig() {
         String[] defaultList = {"AIR", "STONE", "DEAD_BUSH", "LEAVES", "RED_ROSE", "YELLOW_FLOWER", "VINE", "LONG_GRASS", "TALL_GRASS"};
         String[] defaultWorlds = {"world"};
+        getConfig().addDefault("enable-vault", false);
+        getConfig().addDefault("force-player-to-pay", false);
+        getConfig().addDefault("deathchest-cost", 100.0);
+        getConfig().addDefault("killchest-cost", 50.0);
+        getConfig().addDefault("homechest-cost", 250.0);
         getConfig().addDefault("allow-breaking-chests", true);
         getConfig().addDefault("death-chest-type", "CHEST");
+        getConfig().addDefault("kill-chest-type", "CHEST");
         getConfig().addDefault("pvp-tag-time", 30);
         getConfig().addDefault("maximum-deathchests", 3);
         getConfig().addDefault("maximum-killchests", 2);
@@ -177,6 +205,11 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("allowed-worlds", Arrays.asList(defaultWorlds));
         getConfig().options().copyDefaults(true);
         saveConfig();
+        VaultEnabled = getConfig().getBoolean("enable-vault");
+        DeathChestCost = getConfig().getDouble("deathchest-cost");
+        HomeChestCost = getConfig().getDouble("homechest-cost");
+        KillChestCost = getConfig().getDouble("killchest-cost");
+        ForceToPay = getConfig().getBoolean("force-player-to-pay");
         AllowBreaking = getConfig().getBoolean("allow-breaking-chests");
         MaximumDeathChests = getConfig().getInt("maximum-deathchests");
         MaximumKillChests = getConfig().getInt("maximum-killchests");
@@ -195,6 +228,7 @@ public class Main extends JavaPlugin {
         Radius = getConfig().getInt("search-radius-for-protected-regions");
         PvpTagTime = getConfig().getInt("pvp-tag-time");
         DeathChestType = getConfig().getString("death-chest-type");
+        KillChestType = getConfig().getString("kill-chest-type");
         playerData = new PlayerData(this);
         languageConfig = new LanguageConfig(this);
         playerData.saveDefaultPlayerConfig();
@@ -234,7 +268,7 @@ public class Main extends JavaPlugin {
                         }
                         if(w != null) {
                             Location loc = new Location(w, x, y, z);
-                            Inventory inv;
+                            Inventory inv = null;
                             if(base != null) {
                                 Inventory baseInv;
                                 baseInv = Serialization.Deserialize(base);
@@ -250,10 +284,10 @@ public class Main extends JavaPlugin {
                                     Block block = loc.getBlock();
                                     EnderHolder eh = new EnderHolder(LangStrings.DeathChestInv, 54, block);
                                     inv = eh.getInventory();
-                                } else {
-                                    log.warning("[DeathChest] Found invalid death chest! It will be removed from the player data!");
-                                    Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".death-chests." + id, null);
-                                    continue;
+                                } else if(loc.getBlock().getType() != Material.AIR) {
+                                    Block block = loc.getBlock();
+                                    BlockHolder bh = new BlockHolder(LangStrings.DeathChestInv, 54, block);
+                                    inv = bh.getInventory();
                                 }
                                 Helper.MoveItemsToInventory(baseInv, inv);
                             } else {
@@ -269,10 +303,10 @@ public class Main extends JavaPlugin {
                                     Block block = loc.getBlock();
                                     EnderHolder eh = new EnderHolder(LangStrings.DeathChestInv, 54, block);
                                     inv = eh.getInventory();
-                                } else {
-                                    log.warning("[DeathChest] Found invalid death chest! It will be removed from the player data!");
-                                    Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".death-chests." + id, null);
-                                    continue;
+                                } else if(loc.getBlock().getType() != Material.AIR) {
+                                    Block block = loc.getBlock();
+                                    BlockHolder bh = new BlockHolder(LangStrings.DeathChestInv, 54, block);
+                                    inv = bh.getInventory();
                                 }
                             }
                             DeathChest chest = new DeathChest(p, loc, inv);
@@ -310,7 +344,7 @@ public class Main extends JavaPlugin {
                         }
                         if(w != null) {
                             Location loc = new Location(w, x, y, z);
-                            Inventory inv;
+                            Inventory inv = null;
                             if(base != null) {
                                 Inventory baseInv;
                                 baseInv = Serialization.Deserialize(base);
@@ -326,10 +360,10 @@ public class Main extends JavaPlugin {
                                     Block block = loc.getBlock();
                                     EnderHolder eh = new EnderHolder(LangStrings.KillChestInv, 54, block);
                                     inv = eh.getInventory();
-                                } else {
-                                    log.warning("[DeathChest] Found invalid kill-chests chest! It will be removed from the player data!");
-                                    Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".kill-chests." + id, null);
-                                    continue;
+                                } else if(loc.getBlock().getType() != Material.AIR) {
+                                    Block block = loc.getBlock();
+                                    BlockHolder bh = new BlockHolder(LangStrings.KillChestInv, 54, block);
+                                    inv = bh.getInventory();
                                 }
                                 Helper.MoveItemsToInventory(baseInv, inv);
                             } else {
@@ -345,10 +379,10 @@ public class Main extends JavaPlugin {
                                     Block block = loc.getBlock();
                                     EnderHolder eh = new EnderHolder(LangStrings.KillChestInv, 54, block);
                                     inv = eh.getInventory();
-                                } else {
-                                    log.warning("[DeathChest] Found invalid kill chest! It will be removed from the player data!");
-                                    Main.playerData.getPlayerConfig().set("players." + p.getUniqueId() + ".kill-chests." + id, null);
-                                    continue;
+                                } else if(loc.getBlock().getType() != Material.AIR) {
+                                    Block block = loc.getBlock();
+                                    BlockHolder bh = new BlockHolder(LangStrings.KillChestInv, 54, block);
+                                    inv = bh.getInventory();
                                 }
                             }
                             KillChest chest = new KillChest(p, loc, inv);
@@ -503,6 +537,13 @@ public class Main extends JavaPlugin {
         LangStrings.LineThree = languageConfig.getLanguageConfig().getString("line-three").replace('&', '§');
         LangStrings.LineFour = languageConfig.getLanguageConfig().getString("line-four").replace('&', '§');
         LangStrings.NotAllowedToBreakFromOtherPlayers = languageConfig.getLanguageConfig().getString("not-allowed-to-break-from-players").replace('&', '§');
+        LangStrings.TakenFromAccountDC = languageConfig.getLanguageConfig().getString("taken-from-account-dc").replace('&', '§');
+        LangStrings.TakenFromAccountKC = languageConfig.getLanguageConfig().getString("taken-from-account-kc").replace('&', '§');
+        LangStrings.TakenFromAccountHC = languageConfig.getLanguageConfig().getString("taken-from-account-hc").replace('&', '§');
+        LangStrings.NotEnoughMoney = languageConfig.getLanguageConfig().getString("not-enough-money").replace('&', '§');
+        LangStrings.NotEnoughMoneyHC = languageConfig.getLanguageConfig().getString("not-enough-money-hc").replace('&', '§');
+        LangStrings.AllowPaying = languageConfig.getLanguageConfig().getString("allow-paying").replace('&', '§');
+        LangStrings.DisallowPaying = languageConfig.getLanguageConfig().getString("disallow-paying").replace('&', '§');
         if(UseTombstones) {
             LangStrings.ActiveType = LangStrings.TypeTombstone;
         } else {

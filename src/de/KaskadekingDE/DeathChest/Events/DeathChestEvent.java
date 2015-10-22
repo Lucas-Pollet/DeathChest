@@ -1,15 +1,13 @@
 package de.KaskadekingDE.DeathChest.Events;
 
+import de.KaskadekingDE.DeathChest.Classes.*;
 import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
-import de.KaskadekingDE.DeathChest.Classes.EnderHolder;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
-import de.KaskadekingDE.DeathChest.Classes.Helper;
-import de.KaskadekingDE.DeathChest.Classes.PermissionManager;
-import de.KaskadekingDE.DeathChest.Classes.SignHolder;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.Animation.AnimationManager;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.PVPTag;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import de.KaskadekingDE.DeathChest.Main;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -53,6 +51,7 @@ public class DeathChestEvent implements Listener {
         }
         if (PermissionManager.PlayerHasPermission(p, PermissionManager.DEATH_PERMISSION, false)) {
             if (checkRequirements(p, e.getDrops())) {
+
                 Location loc = chestSpawnLocation.get(p);
                 Inventory inv = null;
                 boolean spawnSign = true;
@@ -101,12 +100,30 @@ public class DeathChestEvent implements Listener {
                         EnderHolder eh = new EnderHolder(LangStrings.DeathChestInv, 54, block);
                         inv = eh.getInventory();
                     } else {
-                        Main.log.severe("[DeathChest] Invalid death chest type " + Main.DeathChestType);
-                        return;
+                        Material material = Material.getMaterial(Main.DeathChestType);
+                        loc.getBlock().setType(material);
+                        Block block = loc.getBlock();
+                        BlockHolder bh = new BlockHolder(LangStrings.DeathChestInv, 54, block);
+                        inv = bh.getInventory();
                     }
 
                 }
-
+                boolean playerWantToPay = Main.playerData.getPlayerConfig().getBoolean("players." + p.getUniqueId() + ".pay-enabled", false);
+                if(!playerWantToPay && Main.ForceToPay) playerWantToPay = true;
+                if(Main.VaultEnabled && playerWantToPay && Main.DeathChestCost > 0) {
+                    EconomyResponse r = Main.Economy.withdrawPlayer(p, Main.DeathChestCost);
+                    String price = Main.Economy.format(Main.DeathChestCost);
+                    if(r.transactionSuccess()) {
+                        p.sendMessage(LangStrings.Prefix + " " + LangStrings.TakenFromAccountDC.replace("%price", price));
+                    } else {
+                        p.sendMessage(LangStrings.Prefix + " " + LangStrings.NotEnoughMoney.replace("%price", price));
+                        loc.getBlock().setType(Material.AIR);
+                        return;
+                    }
+                } else if(Main.VaultEnabled && !playerWantToPay && Main.DeathChestCost > 0) {
+                    loc.getBlock().setType(Material.AIR);
+                    return;
+                }
                 for (ItemStack drop : e.getDrops()) {
                     inv.addItem(drop);
                 }
@@ -114,6 +131,7 @@ public class DeathChestEvent implements Listener {
                 DeathChest chest = new DeathChest(p, loc, inv);
                 chest.SaveDeathChest();
                 chestSpawnLocation.remove(p);
+
                 if (Main.ShowCoords) {
                     p.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestWithCoords.replace("%x", Integer.toString(loc.getBlockX())).replace("%y", Integer.toString(loc.getBlockY())).replace("%z", Integer.toString(loc.getBlockZ())).replace("%world", loc.getWorld().getName()));
                 } else {
@@ -129,6 +147,9 @@ public class DeathChestEvent implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent e) {
+
+        if(e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if(Helper.GetChestType(e.getClickedBlock().getLocation()) == Helper.ChestState.Default) return;
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getClickedBlock().getType() == Material.SIGN_POST) {
             Player p = e.getPlayer();
             Location loc = e.getClickedBlock().getLocation();
@@ -177,6 +198,22 @@ public class DeathChestEvent implements Listener {
             if (Main.HookedPacketListener) {
                 AnimationManager.Create(p, dc.ChestLocation);
                 Main.ProtocolManager.SendChestOpenPacket(dc.ChestLocation, p);
+            }
+            p.openInventory(dc.DeathInventory);
+        } else {
+            Player p = e.getPlayer();
+            Location loc = e.getClickedBlock().getLocation();
+            DeathChest dc = DeathChest.DeathChestByLocation(loc);
+            if (dc == null) {
+                return;
+            }
+            e.setCancelled(true);
+            if (!dc.EqualsOwner(p) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%owner", dc.Owner.getName()).replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
+                e.setCancelled(true);
+                return;
+            } else if (PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false) & !dc.EqualsOwner(p)) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.ThisChestBelongsTo.replace("%owner", dc.Owner.getName()));
             }
             p.openInventory(dc.DeathInventory);
         }
@@ -262,6 +299,16 @@ public class DeathChestEvent implements Listener {
                 AnimationManager.Remove(p);
                 Main.ProtocolManager.SendChestClosePacket(dc.ChestLocation, p);
             }
+            if (Helper.ChestEmpty(dc.DeathInventory)) {
+                p.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestRemoved);
+                dc.RemoveChest(true);
+            }
+        } else if(ih instanceof BlockHolder) {
+            BlockHolder bh = (BlockHolder) ih;
+            Block block = bh.getBlock();
+            Location loc = new Location(block.getLocation().getWorld(), block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ());
+            DeathChest dc = DeathChest.DeathChestByLocation(loc);
+            if(dc == null) return;
             if (Helper.ChestEmpty(dc.DeathInventory)) {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestRemoved);
                 dc.RemoveChest(true);
