@@ -1,5 +1,7 @@
 package de.KaskadekingDE.DeathChest.Events;
 
+import com.gmail.filoghost.holographicdisplays.api.Hologram;
+import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 import de.KaskadekingDE.DeathChest.Classes.*;
 import de.KaskadekingDE.DeathChest.Classes.Chests.DeathChest;
 import de.KaskadekingDE.DeathChest.Classes.Chests.HomeChest;
@@ -132,6 +134,16 @@ public class DeathChestEvent implements Listener {
                 chest.SaveDeathChest();
                 chestSpawnLocation.remove(p);
 
+                if(Main.HolographicDisplays) {
+                    Location locHolo = new Location(loc.getWorld(), loc.getX() + 0.5, loc.getY() + 2, loc.getZ() + 0.5);
+                    Hologram hologram = HologramsAPI.createHologram(Main.plugin, locHolo);
+                    hologram.appendTextLine("§cDeathChest of §6" + p.getDisplayName());
+                    hologram.appendTextLine("§cBreaks in §e" + Main.SecondsToRemove + " seconds");
+                    HolographicDisplayContainer container = new HolographicDisplayContainer();
+                    container.HologramDisplay = hologram;
+                    chest.HologramDisplay = container;
+                }
+
                 if (Main.ShowCoords) {
                     p.sendMessage(LangStrings.Prefix + " " + LangStrings.DeathChestWithCoords.replace("%x", Integer.toString(loc.getBlockX())).replace("%y", Integer.toString(loc.getBlockY())).replace("%z", Integer.toString(loc.getBlockZ())).replace("%world", loc.getWorld().getName()));
                 } else {
@@ -157,6 +169,11 @@ public class DeathChestEvent implements Listener {
             if (dc == null) {
                 return;
             }
+            if(Main.LockChest && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
+                p.sendMessage(LangStrings.Prefix + " " + "§cThis chest is locked until it will break!");
+                e.setCancelled(true);
+                return;
+            }
             if (!dc.EqualsOwner(p) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
                 p.sendMessage(LangStrings.Prefix + " " + LangStrings.CantOpen.replace("%owner", dc.Owner.getName()).replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
                 e.setCancelled(true);
@@ -176,6 +193,11 @@ public class DeathChestEvent implements Listener {
             if (dc == null) {
                 return;
             }
+            if(Main.LockChest && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
+                p.sendMessage(LangStrings.Prefix + " " + "§cThis chest is locked until it will break!");
+                e.setCancelled(true);
+                return;
+            }
             if (!dc.EqualsOwner(p) && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
                 return;
             }
@@ -185,6 +207,11 @@ public class DeathChestEvent implements Listener {
             Location loc = e.getClickedBlock().getLocation();
             DeathChest dc = DeathChest.DeathChestByLocation(loc);
             if (dc == null) {
+                return;
+            }
+            if(Main.LockChest && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
+                p.sendMessage(LangStrings.Prefix + " " + "§cThis chest is locked until it will break!");
+                e.setCancelled(true);
                 return;
             }
             e.setCancelled(true);
@@ -205,6 +232,11 @@ public class DeathChestEvent implements Listener {
             Location loc = e.getClickedBlock().getLocation();
             DeathChest dc = DeathChest.DeathChestByLocation(loc);
             if (dc == null) {
+                return;
+            }
+            if(Main.LockChest && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
+                p.sendMessage(LangStrings.Prefix + " " + "§cThis chest is locked until it will break!");
+                e.setCancelled(true);
                 return;
             }
             e.setCancelled(true);

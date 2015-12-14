@@ -1,12 +1,15 @@
 package de.KaskadekingDE.DeathChest.Classes.Chests;
 
+import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import de.KaskadekingDE.DeathChest.Classes.Chests.ChestManager.DeathChestManager;
+import de.KaskadekingDE.DeathChest.Classes.HolographicDisplayContainer;
 import de.KaskadekingDE.DeathChest.Classes.Tasks.TaskScheduler;
 import de.KaskadekingDE.DeathChest.Language.LangStrings;
 import de.KaskadekingDE.DeathChest.Main;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 
@@ -17,6 +20,7 @@ public class DeathChest implements Comparable<DeathChest>{
     public Inventory DeathInventory;
     public Runnable Task;
     public int TaskId = -1;
+    public HolographicDisplayContainer HologramDisplay;
 
     public DeathChest(Player owner, Location loc, Inventory inv) {
         Owner = owner;
@@ -82,14 +86,45 @@ public class DeathChest implements Comparable<DeathChest>{
                 Material type = Material.getMaterial(Main.DeathChestType);
                 if(loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.CHEST || loc.getWorld().getBlockAt(loc).getType() == Material.SIGN_POST || loc.getWorld().getBlockAt(loc).getType() == type) {
                     loc.getBlock().setType(Material.AIR);
-                    RemoveChest();
+                    if(Main.LockChest) {
+                        RemoveChestWithDrops();
+                    } else {
+                        RemoveChest();
+                    }
                     if(p.isOnline()) {
                         p.getPlayer().sendMessage(LangStrings.Prefix + " " + LangStrings.Despawned.replace("%type", LangStrings.DeathChest + " " + LangStrings.ActiveType));
                     }
                 }
+                if(HologramDisplay != null) {
+                    HologramDisplay.HologramDisplay.delete();
+                    HologramDisplay = null;
+                }
                 TaskScheduler.RemoveTask(TaskId);
             }
         };
+        if(Main.HolographicDisplays) {
+            Runnable settime = new Runnable() {
+
+                public int taskid;
+                private int seconds = Main.SecondsToRemove;
+
+                @Override
+                public void run() {
+                    if(HologramDisplay == null) {
+                        Bukkit.getScheduler().cancelTask(HologramDisplay.TaskId);
+                    }
+                    seconds--;
+                    Hologram holo = HologramDisplay.HologramDisplay;
+                    holo.removeLine(1);
+                    holo.appendTextLine("§cBreaks in §6" + Integer.toString(seconds));
+                    if(seconds == 0) {
+                        Bukkit.getScheduler().cancelTask(HologramDisplay.TaskId);
+                    }
+                }
+            };
+            int id = Bukkit.getScheduler().scheduleSyncRepeatingTask(Main.plugin, settime, 0L, 20L);
+            HologramDisplay.TaskId = id;
+        }
         Task = timeout;
         TaskId = Bukkit.getScheduler().scheduleSyncDelayedTask(Main.plugin, timeout, Main.SecondsToRemove * 20L);
         TaskScheduler.AddTask(TaskId);
@@ -102,7 +137,38 @@ public class DeathChest implements Comparable<DeathChest>{
         Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".death-chests." + GetId(), null);
         Main.playerData.savePlayerConfig();
         DeathChestManager.Remove(ChestLocation);
+
         Material type = Material.getMaterial(Main.DeathChestType);
+        ChestLocation.getWorld().playEffect(ChestLocation, Main.BreakEffect, 4, 50);
+        if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST || ChestLocation.getBlock().getType() == type) {
+            ChestLocation.getBlock().setType(Material.AIR);
+        }
+        Owner = null;
+        ChestLocation = null;
+        DeathInventory = null;
+        if(TaskId != -1) {
+            if(Bukkit.getScheduler().isQueued(TaskId) || Bukkit.getScheduler().isCurrentlyRunning(TaskId)) {
+                Bukkit.getScheduler().cancelTask(TaskId);
+            }
+        }
+        TaskId = -1;
+        Task = null;
+    }
+
+    public void RemoveChestWithDrops() {
+        if(Owner == null || DeathInventory == null || ChestLocation == null) {
+            return;
+        }
+        Main.playerData.getPlayerConfig().set("players." + Owner.getUniqueId() + ".death-chests." + GetId(), null);
+        Main.playerData.savePlayerConfig();
+        for(ItemStack stack : DeathInventory) {
+            if(stack != null) {
+                ChestLocation.getWorld().dropItemNaturally(ChestLocation, stack);
+            }
+        }
+        DeathChestManager.Remove(ChestLocation);
+        Material type = Material.getMaterial(Main.DeathChestType);
+        ChestLocation.getWorld().playEffect(ChestLocation, Main.BreakEffect, 4, 50);
         if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST || ChestLocation.getBlock().getType() == Material.SIGN_POST || ChestLocation.getBlock().getType() == type) {
             ChestLocation.getBlock().setType(Material.AIR);
         }
@@ -126,6 +192,7 @@ public class DeathChest implements Comparable<DeathChest>{
         Main.playerData.savePlayerConfig();
         DeathChestManager.Remove(ChestLocation);
         Material type = Material.getMaterial(Main.DeathChestType);
+        ChestLocation.getWorld().playEffect(ChestLocation, Main.BreakEffect, 4, 50);
         if(ChestLocation.getBlock().getType() == Material.CHEST || ChestLocation.getBlock().getType() == Material.ENDER_CHEST ||  ChestLocation.getBlock().getType() == Material.SIGN_POST || ChestLocation.getBlock().getType() == type) {
             ChestLocation.getBlock().setType(Material.AIR);
         }

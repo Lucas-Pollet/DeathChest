@@ -82,6 +82,10 @@ public class Main extends JavaPlugin {
     public static int PvpTagTime;
     public static String DeathChestType;
     public static String KillChestType;
+    public static boolean LockChest;
+    public static boolean HolographicDisplays;
+
+    public static Effect BreakEffect;
 
     public static IWorldGuardFlag WorldGuardManager;
 
@@ -104,6 +108,7 @@ public class Main extends JavaPlugin {
         checkWorldGuard();
         LoadConfig();
         checkVault();
+        checkHolographicDisplays();
         PluginDescriptionFile pdf = getDescription();
         getCommand("deathchest").setExecutor(new DeathChestCommand());
         Bukkit.getPluginManager().registerEvents(new DeathChestEvent(), this);
@@ -128,6 +133,15 @@ public class Main extends JavaPlugin {
         }
         plugin = null;
         log.info("[DeathChest] DeathChest has been disabled!");
+    }
+
+    private void checkHolographicDisplays() {
+        if(Bukkit.getPluginManager().isPluginEnabled("HolographicDisplays") && Main.HolographicDisplays) {
+            HolographicDisplays = true;
+        } else if(!Bukkit.getPluginManager().isPluginEnabled("HolographicDisplays") && Main.HolographicDisplays) {
+            log.warning("[DeathChest] HolographicDisplays is enabled in config but the plugin could not be found.");
+            HolographicDisplays = false;
+        }
     }
 
     private void checkVault() {
@@ -180,6 +194,8 @@ public class Main extends JavaPlugin {
         String[] defaultList = {"AIR", "STONE", "DEAD_BUSH", "LEAVES", "RED_ROSE", "YELLOW_FLOWER", "VINE", "LONG_GRASS", "TALL_GRASS"};
         String[] defaultWorlds = {"world"};
         getConfig().addDefault("enable-vault", false);
+        getConfig().addDefault("effect-on-break", "MOBSPAWNER_FLAMES");
+        getConfig().addDefault("add-holographic-displays-above-chests", false);
         getConfig().addDefault("force-player-to-pay", false);
         getConfig().addDefault("deathchest-cost", 100.0);
         getConfig().addDefault("killchest-cost", 50.0);
@@ -188,6 +204,7 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("death-chest-type", "CHEST");
         getConfig().addDefault("kill-chest-type", "CHEST");
         getConfig().addDefault("pvp-tag-time", 30);
+        getConfig().addDefault("lock-chest-until-destroyed", false);
         getConfig().addDefault("maximum-deathchests", 3);
         getConfig().addDefault("maximum-killchests", 2);
         getConfig().addDefault("disable-killchests", false);
@@ -229,6 +246,10 @@ public class Main extends JavaPlugin {
         PvpTagTime = getConfig().getInt("pvp-tag-time");
         DeathChestType = getConfig().getString("death-chest-type");
         KillChestType = getConfig().getString("kill-chest-type");
+        HolographicDisplays = getConfig().getBoolean("add-holographic-displays-above-chests");
+        LockChest = getConfig().getBoolean("lock-chest-until-destroyed");
+        String name = getConfig().getString("effect-on-break");
+        BreakEffect =  Effect.valueOf(name);
         playerData = new PlayerData(this);
         languageConfig = new LanguageConfig(this);
         playerData.saveDefaultPlayerConfig();
