@@ -124,7 +124,7 @@ public class ChestProtector implements Listener {
                     return;
                 }
 
-                if(Main.LockChest && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
+                if(Main.LockChest && dc.Locked && !PermissionManager.PlayerHasPermission(e.getPlayer(), PermissionManager.PROTECTION_BYPASS, false)) {
                     e.getPlayer().sendMessage(LangStrings.Prefix + " " + "§cThis chest is locked! Please wait until it breaks.");
                     e.setCancelled(true);
                     return;
