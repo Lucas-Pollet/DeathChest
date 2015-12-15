@@ -12,6 +12,7 @@ import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.Permission;
@@ -50,7 +51,11 @@ public class DeathChestCommand implements CommandExecutor {
             Main.plugin.reloadConfig();
             Main.playerData.reloadPlayerConfig();
             Main.plugin.SaveConfig();
-            Main.plugin.LoadConfig();
+            try {
+                Main.plugin.LoadConfig();
+            } catch (InvalidConfigurationException e) {
+                e.printStackTrace();
+            }
             cs.sendMessage(LangStrings.Prefix + " " + LangStrings.ConfigReloaded);
             return true;
         } else if(args[0].equalsIgnoreCase("home")) {

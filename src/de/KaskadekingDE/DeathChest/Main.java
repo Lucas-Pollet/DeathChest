@@ -29,6 +29,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Sign;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -83,6 +84,7 @@ public class Main extends JavaPlugin {
     public static String DeathChestType;
     public static String KillChestType;
     public static boolean LockChest;
+    public static int LockTime;
     public static boolean HolographicDisplays;
 
     public static Effect BreakEffect;
@@ -106,7 +108,11 @@ public class Main extends JavaPlugin {
         }
         checkPacketListener();
         checkWorldGuard();
-        LoadConfig();
+        try {
+            LoadConfig();
+        } catch (InvalidConfigurationException e) {
+            e.printStackTrace();
+        }
         checkVault();
         checkHolographicDisplays();
         PluginDescriptionFile pdf = getDescription();
@@ -190,7 +196,7 @@ public class Main extends JavaPlugin {
         }
     }
 
-    public void LoadConfig() {
+    public void LoadConfig() throws InvalidConfigurationException {
         String[] defaultList = {"AIR", "STONE", "DEAD_BUSH", "LEAVES", "RED_ROSE", "YELLOW_FLOWER", "VINE", "LONG_GRASS", "TALL_GRASS"};
         String[] defaultWorlds = {"world"};
         getConfig().addDefault("enable-vault", false);
@@ -205,6 +211,7 @@ public class Main extends JavaPlugin {
         getConfig().addDefault("kill-chest-type", "CHEST");
         getConfig().addDefault("pvp-tag-time", 30);
         getConfig().addDefault("lock-chest-until-destroyed", false);
+        getConfig().addDefault("lock-time", 60);
         getConfig().addDefault("maximum-deathchests", 3);
         getConfig().addDefault("maximum-killchests", 2);
         getConfig().addDefault("disable-killchests", false);
@@ -249,6 +256,10 @@ public class Main extends JavaPlugin {
         HolographicDisplays = getConfig().getBoolean("add-holographic-displays-above-chests");
         LockChest = getConfig().getBoolean("lock-chest-until-destroyed");
         String name = getConfig().getString("effect-on-break");
+        LockTime = getConfig().getInt("lock-time");
+        if(LockTime > SecondsToRemove) {
+            throw new InvalidConfigurationException("lock-time has to be greater than seconds-to-remove");
+        }
         BreakEffect =  Effect.valueOf(name);
         playerData = new PlayerData(this);
         languageConfig = new LanguageConfig(this);

@@ -169,7 +169,7 @@ public class DeathChestEvent implements Listener {
             if (dc == null) {
                 return;
             }
-            if(Main.LockChest && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
+            if(Main.LockChest && dc.Locked && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
                 p.sendMessage(LangStrings.Prefix + " " + "§cThis chest is locked until it will break!");
                 e.setCancelled(true);
                 return;
@@ -193,7 +193,7 @@ public class DeathChestEvent implements Listener {
             if (dc == null) {
                 return;
             }
-            if(Main.LockChest && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
+            if(Main.LockChest && dc.Locked && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
                 p.sendMessage(LangStrings.Prefix + " " + "§cThis chest is locked until it will break!");
                 e.setCancelled(true);
                 return;
@@ -209,7 +209,7 @@ public class DeathChestEvent implements Listener {
             if (dc == null) {
                 return;
             }
-            if(Main.LockChest && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
+            if(Main.LockChest && dc.Locked  && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
                 p.sendMessage(LangStrings.Prefix + " " + "§cThis chest is locked until it will break!");
                 e.setCancelled(true);
                 return;
@@ -234,7 +234,7 @@ public class DeathChestEvent implements Listener {
             if (dc == null) {
                 return;
             }
-            if(Main.LockChest && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
+            if(Main.LockChest && dc.Locked  && !PermissionManager.PlayerHasPermission(p, PermissionManager.PROTECTION_BYPASS, false)) {
                 p.sendMessage(LangStrings.Prefix + " " + "§cThis chest is locked until it will break!");
                 e.setCancelled(true);
                 return;
